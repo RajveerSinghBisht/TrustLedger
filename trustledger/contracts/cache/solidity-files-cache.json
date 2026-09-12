@@ -1,4 +1,41 @@
 {
   "_format": "hh-sol-cache-2",
-  "files": {}
+  "files": {
+    "D:\\SIH'26\\Project Files\\TrustLedger\\trustledger\\contracts\\contracts\\IdentityRegistry.sol": {
+      "lastModificationDate": 1789249555405,
+      "contentHash": "d378995e6d0b6488c81cec2b8766a30d",
+      "sourceName": "contracts/IdentityRegistry.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "IdentityRegistry"
+      ]
+    }
+  }
 }

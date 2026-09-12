@@ -36,6 +36,44 @@
       "artifacts": [
         "IdentityRegistry"
       ]
+    },
+    "D:\\SIH'26\\Project Files\\TrustLedger\\trustledger\\contracts\\contracts\\AccessControl.sol": {
+      "lastModificationDate": 1789249835142,
+      "contentHash": "d1a1e823e593324871d2b4bb720c1619",
+      "sourceName": "contracts/AccessControl.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./IdentityRegistry.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "AccessControl"
+      ]
     }
   }
 }

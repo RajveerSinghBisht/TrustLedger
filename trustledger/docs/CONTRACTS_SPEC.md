@@ -13,11 +13,33 @@ contract, and do not split them further than this without discussion.
 2. `AccessControl.sol` (this is where policy-at-the-time verification lives)
 3. `AssetRegistry.sol` (NFT-backed asset records)
 
-Target: Solidity ^0.8.20. Target network for this phase: **local Hardhat
-network only.** Do not add testnet deployment scripts yet — that's a later
-phase once the core logic is tested and working.
+Target: Solidity ^0.8.20 (pinned in `hardhat.config.js` to exactly `0.8.24`
+as of this revision — see the compiler/EVM note below). Target network for
+this phase: **local Hardhat network only.** Do not add testnet deployment
+scripts yet — that's a later phase once the core logic is tested and
+working.
+
+**Compiler and EVM target (explicit, hard-won — do not silently change):**
+`hardhat.config.js` pins Solidity `0.8.24` and sets
+`settings.evmVersion: "cancun"` explicitly, rather than relying on
+Hardhat's default. This is necessary, not incidental: OpenZeppelin
+`^5.0.0` resolves to a `5.x` release whose `Bytes.sol` uses the `mcopy`
+opcode (EIP-5656, introduced in the Cancun hard fork). Hardhat defaults to
+the older `paris` EVM target for solc `>= 0.8.20` specifically to avoid
+opcode-support issues on real-world chains that don't yet support newer
+opcodes — but since this project only targets a local Hardhat network in
+this phase (no testnet, no mainnet), targeting `cancun` is safe and
+required for `AssetRegistry.sol`'s ERC-721 import to compile at all.
+Compiling without this setting fails with `DeclarationError: Function
+"mcopy" not found`.
 
 ## 1. IdentityRegistry.sol
+
+Canonical resolver between DID strings and addresses for the entire
+system, in ADDITION to the role/status source-of-truth role described
+below. This is an explicit architectural invariant, not a convenience
+feature — `AccessControl` and `AssetRegistry` both resolve DIDs through
+this single contract rather than maintaining their own mappings.
 
 ```solidity
 enum Role { NONE, ADMIN, MANAGER, AUDITOR, USER }
@@ -31,9 +53,23 @@ struct Identity {
     uint256 createdAt;
 }
 
-// Only an existing ADMIN can call this. The very first Admin is set in the
-// constructor (deployer becomes the first Admin) — bootstrapping problem,
-// solved simply for this scope.
+// Constructor: the deployer becomes the first ADMIN, registered as
+// ACTIVE, using REAL initialization data supplied at deployment — not
+// placeholder values. Solves the bootstrapping problem: an empty
+// registry has no existing Admin who could otherwise call
+// registerIdentity for anyone. Emits the SAME IdentityRegistered event
+// that every subsequent registration emits — the bootstrap identity is
+// not a special, invisible case in the audit trail.
+constructor(string memory did, bytes memory publicKey);
+
+// Only an existing, ACTIVE ADMIN can call this (role == ADMIN AND
+// status == ACTIVE — a revoked Admin loses admin rights immediately;
+// this is deliberate, for consistency with how AccessControl treats
+// revoked identities elsewhere).
+//
+// Rejects a DID that is already mapped to a different, non-zero
+// address (see resolveDID below) — a DID must be unique and must not
+// be silently reassigned.
 function registerIdentity(
     address identityAddress,
     string calldata did,
@@ -42,17 +78,32 @@ function registerIdentity(
 ) external; // emits IdentityRegistered
 
 // Only ADMIN can call. Sets status to REVOKED. Does not delete the record —
-// history must remain queryable.
+// history must remain queryable. Does NOT clear the DID->address mapping
+// (see resolveDID) — historical permissions, ownership records, and audit
+// events must remain resolvable after revocation.
 function revokeIdentity(address identityAddress) external; // emits IdentityRevoked
 
-// Read-only. Returns the full Identity struct.
+// Read-only. Returns the full Identity struct. Reverts if the address was
+// never registered (this is NOT the same behavior as getRole, which
+// returns Role.NONE instead — see below).
 function getIdentity(address identityAddress) external view returns (Identity memory);
 
 // Read-only. Used by other contracts (AccessControl, AssetRegistry) and by
 // the backend's auth flow to check role and active status before allowing
 // an operation.
 function isActive(address identityAddress) external view returns (bool);
+
+// Returns Role.NONE for an address that was never registered, rather
+// than reverting — callers can safely check this without a try/catch.
 function getRole(address identityAddress) external view returns (Role);
+
+// Resolves a DID string to its registered address. THE canonical
+// DID -> address resolution mechanism for the whole system.
+//   Unknown DID       -> address(0)
+//   Known active DID  -> registered address
+//   Known revoked DID -> SAME registered address (unchanged by revocation)
+//   Duplicate DID     -> registration rejected (see registerIdentity)
+function resolveDID(string calldata did) external view returns (address);
 
 event IdentityRegistered(address indexed identityAddress, string did, Role role, uint256 timestamp);
 event IdentityRevoked(address indexed identityAddress, uint256 timestamp);
@@ -62,7 +113,7 @@ event IdentityRevoked(address indexed identityAddress, uint256 timestamp);
 call `isActive()` (and, where relevant, `getRole()`) on `IdentityRegistry`
 before proceeding. Do not duplicate role-storage in other contracts — this
 contract is the single source of truth for who someone is and what role
-they hold.
+they hold, AND for resolving between their DID and address representations.
 
 **Note:** this contract stores only CURRENT status (ACTIVE/REVOKED), not a
 history of status changes over time. This has a direct consequence for
@@ -140,13 +191,15 @@ function checkPermissionAtTime(
 // download. NOT simply checkPermissionAtTime(..., block.timestamp) — it
 // carries one additional, mandatory requirement:
 //
-// MUST also call IdentityRegistry.isActive() for the subject's registered
-// address and return false if the identity is REVOKED, regardless of any
-// GRANTED permission record. This means identity revocation takes effect
-// on current asset access immediately, independent of any outstanding
-// backend JWT session validity (see BACKEND_SPEC.md Authentication
-// section for why this matters: JWT role claims can go stale for up to
-// 15 minutes, but this check ensures asset ACCESS never does).
+// MUST resolve subjectDID to an address via IdentityRegistry.resolveDID(),
+// then call IdentityRegistry.isActive() on that address, returning false
+// if the DID doesn't resolve (address(0)) or the identity is REVOKED —
+// regardless of any GRANTED permission record. This means identity
+// revocation takes effect on current asset access immediately, independent
+// of any outstanding backend JWT session validity (see BACKEND_SPEC.md
+// Authentication section for why this matters: JWT role claims can go
+// stale for up to 15 minutes, but this check ensures asset ACCESS never
+// does).
 function checkPermissionNow(
     uint256 assetId,
     string calldata subjectDID,
@@ -193,20 +246,30 @@ separate function comments:
 
 ### 2.2 Recording access on-chain
 
-Add a function (name and exact placement of the emit call are an
-implementation detail, but the event must be `AssetAccessed` as defined
-above) that the backend calls when granting a download, e.g.:
-
 ```solidity
 function recordAccess(
     uint256 assetId,
     string calldata requesterDID,
     uint256 permissionId
-) external; // emits AssetAccessed; caller must be a registered, active
-            // identity; does not re-run the permission check itself —
-            // the backend calls this AFTER checkPermissionNow already
-            // returned true, this function only records the fact
+) external; // emits AssetAccessed
 ```
+
+**CRITICAL, corrected from an earlier draft of this spec:** this function
+does NOT merely trust that the caller already ran `checkPermissionNow` —
+it independently RE-VERIFIES authorization itself before emitting the
+event, by calling `checkPermissionNow(assetId, requesterDID, READ)`
+internally. An earlier version of this spec described `recordAccess` as
+trusting the caller's prior check ("does not re-run the permission check
+itself"); that description was rejected as a genuine vulnerability — a
+function that only trusts the caller's word is a way for any caller to
+manufacture a valid-looking `AssetAccessed` event without a real
+authorized access ever having occurred. The event must represent a
+legitimate access operation, not merely someone invoking an endpoint that
+emits an event. `recordAccess` also independently requires its OWN caller
+(`msg.sender` — typically the backend's on-chain relay identity) to be a
+registered, active identity — this is a distinct check from the
+`requesterDID` authorization check, since the caller and the subject of
+the access are different identities.
 
 This was previously an open question in earlier drafts (which contract
 should own this event). Resolved here: it lives in `AccessControl.sol`,
@@ -251,8 +314,17 @@ struct Asset {
     uint256 createdAt;
 }
 
+// Constructor takes BOTH IdentityRegistry's and AccessControl's
+// addresses — this contract depends on both (identity/role checks via
+// IdentityRegistry, TRANSFER permission checks via AccessControl). This
+// means the required deployment order is strictly IdentityRegistry ->
+// AccessControl -> AssetRegistry, not merely "IdentityRegistry first,
+// the other two in either order" (see Cross-contract dependency below).
+constructor(address identityRegistryAddress, address accessControlAddress);
+
 // Only ADMIN may call. Mints a new NFT, assigns it to ownerDID, stores the
-// Asset struct. assetId is auto-incremented starting from 1.
+// Asset struct. assetId is auto-incremented starting from 1. Rejects if
+// ownerDID does not resolve to a registered, active identity.
 function registerAsset(
     bytes32 assetHash,
     string calldata ownerDID,
@@ -260,30 +332,55 @@ function registerAsset(
     Classification classification
 ) external returns (uint256 assetId); // emits AssetRegistered
 
-// Only ADMIN, or the current owner if they hold TRANSFER permission per
-// AccessControl.checkPermissionNow(), may call.
+// Callable by ADMIN, or by the current owner if they hold TRANSFER
+// permission per AccessControl.checkPermissionNow(). Takes the
+// destination as an ADDRESS, not a DID string — the address is the
+// source of truth, DID is derived metadata (see the ownership
+// consistency requirement above). newOwnerDID was REMOVED as a
+// parameter in this revision, precisely to prevent a caller from
+// supplying a DID that might not match the actual destination address.
 //
-// OWNERSHIP CONSISTENCY REQUIREMENT (explicit fix to an earlier gap in
-// this spec): this asset is an ERC-721 token, and ERC-721 tracks
-// ownership via an address (ownerOf(tokenId) returns an address, not a
-// string). An earlier version of this function updated only the
-// ownerDID string field, which could desynchronize from the actual
-// ERC-721 token owner — two disagreeing sources of truth about who owns
-// an asset. This function MUST update both atomically in a single
-// transaction:
-//   1. Call the internal ERC-721 transfer function to move the actual
-//      token to the address corresponding to newOwnerDID (resolve via
-//      IdentityRegistry — the DID's registered address is the ERC-721
-//      owner).
-//   2. Update the ownerDID field to match.
-// ownerDID is therefore a derived/canonical human-readable representation
-// of the real ERC-721 owner, not an independently-settable field. Do not
-// implement a path where ownerDID can be set without the corresponding
-// ERC-721 owner also changing, or vice versa.
+// OWNERSHIP CONSISTENCY REQUIREMENT: this asset is an ERC-721 token,
+// and ERC-721 tracks ownership via an address (ownerOf(tokenId) returns
+// an address, not a string). This function updates both the actual
+// ERC-721 owner and the ownerDID field atomically in a single
+// transaction — ownerDID is DERIVED from newOwner's registered identity
+// (via IdentityRegistry.getIdentity(newOwner).did) after confirming
+// newOwner is active, never taken as a caller-supplied string.
+//
+// AUTHORIZATION MODEL (explicit, not a redesign of the literal spec
+// wording above): TRANSFER permission is evaluated against the CURRENT
+// OWNER'S OWN DID via checkPermissionNow — i.e. a non-admin transfer
+// requires the owner to hold a TRANSFER permission record naming
+// themselves as subject. AccessControl's permission API is keyed by
+// subjectDID with no separate "delegate" concept, so this is the only
+// shape this MVP supports; a genuinely distinct "authorize a third
+// party to transfer on my behalf" model is out of scope.
+//
+// SEQUENCE, checks-effects-interactions (do not reorder — this exact
+// order is required, not a style preference):
+//   1. Verify asset exists
+//   2. Read current owner (ownerOf)
+//   3. Determine caller authorization (ADMIN, or current owner + TRANSFER
+//      permission on their own DID)
+//   4. Verify newOwner is a registered, ACTIVE identity
+//   5. Resolve newOwner -> DID via IdentityRegistry.getIdentity
+//      (authoritative — never caller-supplied)
+//   6. EFFECT: update Asset.ownerDID to the resolved DID
+//   7. Emit AssetOwnershipTransferred
+//   8. INTERACTION: perform the actual ERC-721 transfer LAST
+// Steps 6-7 (this contract's own state) are deliberately ordered BEFORE
+// step 8 (the external-call-capable ERC-721 transfer, which can invoke
+// onERC721Received on newOwner if it is a contract) — effects before
+// interactions. An earlier draft of this function ordered the ERC-721
+// transfer before the ownerDID update; that ordering was corrected
+// because it left a window, during the transfer call, where
+// ownerOf(assetId) and Asset.ownerDID could disagree if the recipient's
+// onERC721Received hook re-entered this contract.
 //
 // Must NOT delete or reuse the assetId — ownership history stays
 // queryable via the AssetOwnershipTransferred events.
-function transferAsset(uint256 assetId, string calldata newOwnerDID) external;
+function transferAsset(uint256 assetId, address newOwner) external;
     // emits AssetOwnershipTransferred
 
 // Only ADMIN may call. Registers a new version of an existing asset (e.g.
@@ -311,10 +408,27 @@ but requires a deliberate team decision to change the frozen data shapes in
 
 ## Cross-contract dependency
 
-`AssetRegistry` and `AccessControl` both need to check identity status/role
-via `IdentityRegistry`. Deploy `IdentityRegistry` first, pass its address into
-the constructors of the other two. Do not hardcode addresses — use
-constructor injection so tests can deploy fresh instances each time.
+Deployment order is strict, not "IdentityRegistry first, then the other
+two in either order":
+
+```
+IdentityRegistry
+      |
+      v
+AccessControl
+      |
+      v
+AssetRegistry
+```
+
+`AccessControl` depends on `IdentityRegistry` (identity/role checks).
+`AssetRegistry` depends on BOTH `IdentityRegistry` (identity/role checks)
+AND `AccessControl` (TRANSFER permission checks in `transferAsset`) — so
+it must be deployed last. Do not hardcode addresses — use constructor
+injection so tests can deploy fresh instances each time. Do not weaken
+this by duplicating `AccessControl`'s authorization logic inside
+`AssetRegistry` — it must call into the real deployed `AccessControl`
+contract.
 
 ## Testing requirement (not optional)
 
@@ -339,6 +453,13 @@ Write Hardhat tests for, at minimum:
 
 Put tests in `contracts/test/`. Name files `IdentityRegistry.test.js`,
 `AccessControl.test.js`, `AssetRegistry.test.js`.
+
+**Status as of this revision:** all three contracts are implemented and
+all three test files exist, with 56 tests passing across the full suite
+(20 IdentityRegistry, 19 AccessControl, 17 AssetRegistry) — including
+every test in the list above. This is not a target anymore; it's
+confirmed via an actual `npx hardhat test` run, not merely written and
+assumed correct.
 
 ## What NOT to build in this phase
 

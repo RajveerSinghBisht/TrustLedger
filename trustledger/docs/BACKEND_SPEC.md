@@ -29,8 +29,29 @@ HARDHAT_RPC_URL=http://127.0.0.1:8545
 IDENTITY_REGISTRY_ADDRESS=<filled in after contracts are deployed locally>
 ACCESS_CONTROL_ADDRESS=<filled in after contracts are deployed locally>
 ASSET_REGISTRY_ADDRESS=<filled in after contracts are deployed locally>
+RELAYER_PRIVATE_KEY=<a real blockchain account key — one of the funded
+                      Hardhat local accounts for this phase (see
+                      contracts/scripts/deploy.js output). Used to sign
+                      EVERY state-changing contract transaction this
+                      backend submits (registerIdentity, setPermission,
+                      registerAsset, transferAsset, etc.). This is a
+                      distinct key from BACKEND_SIGNING_PRIVATE_KEY below
+                      — do not conflate them. The address derived from
+                      this key is what every contract's on-chain
+                      modifier (onlyActiveAdmin, etc.) actually sees as
+                      msg.sender for every relayed write — see
+                      "Authorization Trust Boundary" below for why this
+                      matters and what it does NOT guarantee. For this
+                      MVP, this should be an address already registered
+                      as ADMIN in IdentityRegistry (e.g. the bootstrap
+                      Admin from deployment) so relayed privileged writes
+                      succeed at the contract level; the backend's own
+                      fresh-role-check (see below) is what enforces the
+                      REAL actor's authorization, not this key's role>
 BACKEND_SIGNING_PRIVATE_KEY=<used for BOTH JWT signing and proof-bundle
-                              signing — NOT a blockchain account key>
+                              signing — NOT a blockchain account key, and
+                              NOT the same key as RELAYER_PRIVATE_KEY
+                              above. This key never touches the chain>
 DOCUMENT_MASTER_KEY=<used ONLY to wrap/unwrap per-asset data encryption
                       keys — see Key Management below; never stored in
                       Postgres, never written to the blockchain>
@@ -57,36 +78,100 @@ MVP requirement, not an optional hardening step.
 ```
 POST /api/auth/challenge
   Request:  { "did": "did:trustledger:0xABC..." }
-  Response: { "nonce": "...", "expiresAt": "<ISO timestamp>" }
+  Response: { "message": "<canonical signable text>", "expiresAt": "<ISO timestamp>" }
 ```
 
-The server stores a nonce record:
+Before issuing a challenge, the server resolves `did` to its registered
+address via `IdentityRegistry.resolveDID()` — reject (404) if the DID is
+unknown (`resolveDID` returns `address(0)`).
+
+The server stores a challenge record:
 ```
-{ nonce, did, expiresAt, consumed: false }
+{ nonce, did, expectedAddress, issuedAt, expiresAt, consumed: false }
 ```
-The nonce is bound to the requesting DID at issuance — this binding is
-checked in the verify step below, not assumed.
+`expectedAddress` is the address `resolveDID(did)` returned — not merely
+the DID string. Binding to the expected address (not just the DID)
+matters because it makes the verify step's job explicit: recover an
+address from the signature, and require that EXACT address to match
+`expectedAddress`, rather than inferring correctness indirectly from
+DID-string equality alone.
+
+**Canonical signable message (domain-separated — do not sign a bare
+nonce):** the server constructs a structured, human-readable message and
+returns it in the challenge response. The client's wallet signs this
+exact text. This is plain structured text, not full EIP-712 typed-data
+signing — a deliberate MVP tradeoff (EIP-712 gives a standardized,
+wallet-native typed-data mechanism; plain structured text is faster to
+implement and sufficiently domain-separated for this threat model,
+provided the message includes explicit domain/purpose/DID binding, not
+just a random value).
+
+```
+TrustLedger Authentication Request
+
+Domain: <configured app domain, e.g. trustledger.local>
+Purpose: Authenticate to TrustLedger backend
+DID: did:trustledger:0xABC...
+Nonce: <128-bit+ cryptographically random value>
+Issued At: <ISO-8601 timestamp>
+Expiration: <ISO-8601 timestamp>
+```
+
+The `Domain` field must be a fixed, server-configured value (not
+client-supplied) — its purpose is exactly what EIP-712's domain
+separator achieves informally: preventing a signature produced for this
+application from being reusable, even coincidentally, by a different
+application that happens to construct similarly-shaped signable text.
 
 ```
 POST /api/auth/verify
-  Request:  { "did": "...", "nonce": "...", "signature": "0x..." }
+  Request:  { "did": "...", "message": "<the exact text that was signed>", "signature": "0x..." }
   Response: { "token": "<JWT>", "expiresAt": "<ISO timestamp>" }
 ```
 
+The client sends back the exact `message` text it received from
+`/api/auth/challenge` and signed — not a separately-parsed `nonce` value.
+Requiring the client to extract just the nonce from the message text
+would be fragile (any parsing mismatch breaks verification for no good
+reason); the server already has everything it needs to extract the nonce
+from the returned message itself (see step 1 below).
+
 Server-side verification, in this exact order:
-1. Look up the stored nonce record by nonce value.
+1. Extract the `nonce` value from the submitted `message` text (it
+   appears in the `Nonce:` line — see the canonical format above), then
+   look up the stored challenge record by that nonce value. Reject (401)
+   if the message doesn't contain a well-formed nonce line at all.
 2. Reject (401) if not found, expired, or already `consumed: true`.
 3. Reject (401) if the stored record's `did` does not exactly match the
-   request's `did`. A nonce issued for one DID must not be redeemable by a
-   signature claiming a different DID.
-4. Verify `signature` against the DID's registered public key, fetched via
-   `IdentityRegistry.getIdentity(identityAddress)`.
-5. Reject (401) if `IdentityRegistry.isActive(identityAddress)` is false.
-6. Mark the nonce record `consumed: true`.
-7. Only after step 6 completes, issue the JWT. Do not issue a JWT and then
-   consume the nonce — consumption must happen first, so a failure between
-   the two steps cannot leave a valid, reusable nonce alongside an already
-   issued token.
+   request's `did`. A challenge issued for one DID must not be redeemable
+   by a signature claiming a different DID.
+4. **Reconstruct the exact canonical message server-side** from the
+   stored challenge record's fields (domain, purpose, did, nonce,
+   issuedAt, expiresAt), and compare it byte-for-byte against the
+   submitted `message` — reject (401) on any mismatch. This is what
+   actually prevents a client from signing arbitrary text and claiming it
+   was the challenge: the server never trusts the submitted message's
+   content, only uses it to confirm it matches what the server itself
+   would have generated.
+5. Recover the signing address from `signature` over the (server-
+   reconstructed, now-confirmed-matching) message (standard ECDSA
+   recovery — `ethers.js` utilities).
+6. Reject (401) if the recovered address does not exactly equal the
+   stored record's `expectedAddress`.
+7. Reject (401) if `IdentityRegistry.isActive(expectedAddress)` is false.
+8. Mark the challenge record `consumed: true`.
+9. Only after step 8 completes, issue the JWT. Do not issue a JWT and
+   then consume the challenge — consumption must happen first, so a
+   failure between the two steps cannot leave a valid, reusable challenge
+   alongside an already issued token.
+
+This chain, stated explicitly because it's the actual security property
+being relied on: cryptographic signature -> recovered address ->
+compared against IdentityRegistry-resolved expectedAddress -> DID
+confirmed -> JWT issued. Every step depends on the previous one; skipping
+the reconstruction-not-trust step (4) or the exact-address-match step (6)
+reopens the exact "self-reported identity" flaw this whole authentication
+design exists to close.
 
 ### JWT
 
@@ -136,6 +221,118 @@ No endpoint accepts an identity claim from anywhere other than a verified
 JWT. If you find yourself reading a DID from a header, query param, or body
 field to decide "who is asking," that is the same flaw this section
 replaced — stop and use the JWT claims instead.
+
+## Authorization Trust Boundary — Read/Access vs. Relayed Writes
+
+There are two distinct authorization guarantees in this system. Do not
+describe them with a single global claim like "blockchain decides
+authorization" — say precisely which path applies:
+**blockchain-enforced authorization for asset access; backend-enforced
+actor authorization for relayed privileged writes.** These are not
+equivalent guarantees, and conflating them overstates what the system
+actually provides.
+
+### Read/access path — blockchain-enforced (the stronger guarantee)
+
+```
+JWT -> DID authentication
+    -> AccessControl.checkPermissionNow()
+    -> IdentityRegistry.isActive(subject)
+    -> permission state
+```
+
+For asset access decisions (e.g. the download endpoint), the CONTRACT
+evaluates the real subject DID/address relationship and current on-chain
+state directly. A revoked identity is denied immediately, regardless of
+JWT freshness — this is the guarantee documented in the MVP Security
+Tradeoff section above.
+
+### Privileged write path — backend-enforced, relayed on-chain (a weaker,
+### distinct guarantee — read this carefully before implementing any
+### privileged endpoint)
+
+```
+JWT -> authenticated DID
+    -> backend verifies CURRENT on-chain role/status via IdentityRegistry
+    -> backend relays the transaction
+    -> contract authorizes the RELAYER, not the human actor
+```
+
+All state-changing contract calls in this backend (registering an
+identity, setting a permission, registering/transferring an asset) are
+submitted by the backend's own signing key — there is no per-user wallet
+signing in this architecture. See `RELAYER_PRIVATE_KEY` in
+Environment / connection assumptions above — this is the actual
+blockchain-account key used to sign every relayed transaction, and it is
+a distinct key from `BACKEND_SIGNING_PRIVATE_KEY` (which only signs JWTs
+and proof bundles, and never touches the chain).
+
+**Consequence, stated precisely:** because every relayed transaction's
+`msg.sender` is the backend's own address (which is a permanently active,
+permanently privileged identity — e.g. the bootstrap Admin, or another
+address the team designates as the relayer), `AccessControl`'s and
+`IdentityRegistry`'s own on-chain modifiers (`onlyActiveAdmin`,
+`onlyActiveAdminOrManager`) always see and authorize the RELAYER, never
+the actual human whose JWT initiated the request. The contract cannot
+distinguish a legitimate request from a revoked identity's old,
+still-relayed request, because it never sees the revoked identity's
+address at all.
+
+**Therefore: the backend's fresh `IdentityRegistry` check, performed
+immediately before relaying, is the ACTUAL enforcement point for the
+human actor on this path — not the contract.** This is the effective
+authorization decision for relayed writes. It is not cryptographically
+equivalent to per-user transaction signing, and must not be described as
+such.
+
+**MANDATORY requirement for every privileged endpoint** (identity
+registration/revocation, permission grant/revoke, admin asset
+operations, ownership transfers where initiated via the backend): before
+relaying the transaction, the backend MUST resolve the caller's CURRENT
+role and active status fresh from `IdentityRegistry` (via `getRole()` and
+`isActive()`, using the `address` claim already present in the verified
+JWT — not re-derived via `resolveDID()`, since the JWT's `address` claim
+is itself only trustworthy because it came from a verified signature at
+issuance time; `resolveDID()` is for going the other direction, DID
+string to address, when only a DID is in hand) — NEVER trust the JWT's
+cached `role` claim for this decision. The JWT's `role` claim is never
+authoritative for privileged authorization; it exists only for coarse
+routing/UI purposes, exactly as documented in the MVP Security Tradeoff
+section above.
+
+**Accepted MVP limitation — time-of-check/time-of-use race:** a narrow
+race exists between the backend's authorization check and the relayed
+transaction's actual inclusion in a block. Concretely:
+
+```
+T0  Backend checks Alice -> ACTIVE MANAGER  (passes)
+T1  Alice is revoked (a separate admin action lands first)
+T2  Backend's earlier transaction, already submitted, executes
+```
+
+At T2, the contract sees `msg.sender = BackendRelayer` — it has no way
+to know Alice was the intended human actor, or that she was revoked
+between T0 and T2. The transaction can succeed despite the revocation.
+This window is narrow (typically one block's worth of time, not the
+15-minute JWT lifetime), but it is not zero. Eliminating it entirely
+requires user-controlled transaction signing (each user holding and
+using their own wallet key to sign transactions directly, rather than
+the backend relaying on their behalf) or an equivalent actor-binding
+mechanism — this is a real architectural change, explicitly out of
+scope for this MVP. Do not attempt to close this race with additional
+backend-side locking or re-checking; the gap is structural to the
+relayer model, not a bug to patch.
+
+**Test coverage requirement:** the backend's privileged-write
+authorization check must have test coverage symmetric to
+`AccessControl`'s own "revoked identity loses access immediately" test
+— specifically, a test proving the backend REJECTS a privileged write
+request carrying a still-valid, unexpired JWT whose subject was revoked
+after the JWT was issued. This is not satisfied by the contract-level
+tests already written for `AccessControl`/`IdentityRegistry` — those
+prove the CONTRACT behaves correctly when it sees the real actor's
+address; they say nothing about the backend's own relay-path check,
+which is a separate code path with its own failure mode.
 
 ## Endpoints
 

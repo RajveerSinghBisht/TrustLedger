@@ -250,10 +250,14 @@ not as the authoritative record of that access.
 - This is explicitly NOT a full KMS/HSM/Vault architecture. No external
   key-management service is introduced for the MVP.
 
-**Not included in this schema:** a nonce table for the authentication flow
-(see BACKEND_SPEC.md Authentication section) — implementers should add a
-table or equivalent store for `{ nonce, did, expiresAt, consumed }` records;
-exact table name/shape is an implementation detail not fixed here.
+**Not included in this schema:** a challenge table for the authentication
+flow (see BACKEND_SPEC.md Authentication section) — implementers should
+add a table or equivalent store for
+`{ nonce, did, expectedAddress, issuedAt, expiresAt, consumed }` records
+(`expectedAddress` is the address `IdentityRegistry.resolveDID(did)`
+returned at challenge-issuance time — required for the verify step's
+exact-address-match check, not merely the DID string); exact table
+name/shape is an implementation detail not fixed here.
 
 ## Field-naming convention
 

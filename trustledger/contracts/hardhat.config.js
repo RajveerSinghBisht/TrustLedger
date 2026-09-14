@@ -7,8 +7,21 @@ require("@nomicfoundation/hardhat-toolbox");
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
-    version: "0.8.20",
+    version: "0.8.24",
     settings: {
+      // Explicit, not left to Hardhat's default. Hardhat defaults to
+      // the "paris" EVM target for solc >= 0.8.20 specifically to avoid
+      // opcode-support issues on chains that don't yet support newer
+      // opcodes (see https://hardhat.org/hardhat-runner/docs/config).
+      // OpenZeppelin 5.6.x's Bytes.sol uses the `mcopy` opcode
+      // (EIP-5656, introduced in the Cancun hard fork) — compiling
+      // against "paris" fails with "Function mcopy not found" because
+      // that opcode doesn't exist at that target. Since this project
+      // only deploys to a local Hardhat network in this phase (see
+      // CONTRACTS_SPEC.md — no testnet yet), targeting "cancun" is
+      // safe: there's no older, real-world chain in scope that would
+      // reject this opcode.
+      evmVersion: "cancun",
       optimizer: {
         // No gas optimization pass for this phase per CONTRACTS_SPEC.md
         // ("What NOT to build in this phase"). Left off, not tuned.

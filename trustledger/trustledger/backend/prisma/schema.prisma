@@ -1,0 +1,95 @@
+// TrustLedger backend — Prisma schema
+//
+// IMPORTANT, per DATA_MODEL.md: this database is NOT authoritative for
+// identity, role, permissions, ownership, or asset integrity — those are
+// blockchain-derived (IdentityRegistry, AccessControl, AssetRegistry).
+// This schema stores: off-chain application data (display names),
+// encrypted file blobs + their wrapped per-asset keys, a queryable/derived
+// mirror of on-chain audit events (NOT the source of truth for disputes —
+// see DATA_MODEL.md section 5), and authentication challenge state.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Off-chain user metadata. did/role/status live on-chain in
+// IdentityRegistry — this table holds ONLY what must never be written to
+// the chain (privacy/cost), per DATA_MODEL.md section 1.
+model User {
+  did         String   @id
+  displayName String   @map("display_name")
+  email       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
+// Encrypted document storage. assetHash/ownerDID/etc. live on-chain in
+// AssetRegistry — this table holds ONLY the encrypted bytes and the
+// wrapped per-asset key (see BACKEND_SPEC.md Key Management section).
+// The raw, unwrapped per-asset key is NEVER persisted here or anywhere.
+model EncryptedRecord {
+  metadataUri      String   @id @map("metadata_uri")
+  assetId          BigInt   @map("asset_id")
+  encryptedBlob    Bytes    @map("encrypted_blob")
+  iv               Bytes
+  authTag          Bytes    @map("auth_tag")
+  wrappedDataKey   Bytes    @map("wrapped_data_key")
+  originalFilename String?  @map("original_filename")
+  mimeType         String?  @map("mime_type")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([assetId])
+  @@map("encrypted_records")
+}
+
+// Queryable/derived mirror of on-chain events. Per DATA_MODEL.md section
+// 5 and section 12.2 of the wider project docs: on-chain events remain
+// the source of truth for anything disputed. This table is a convenience
+// index for fast queries, NOT the authoritative record.
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  eventType String   @map("event_type") // e.g. 'IDENTITY_CREATED', 'ASSET_ACCESSED'
+  actorDid  String   @map("actor_did")
+  assetId   BigInt?  @map("asset_id")
+  txHash    String?  @map("tx_hash") // on-chain transaction hash
+  details   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([actorDid])
+  @@index([assetId])
+  @@index([eventType])
+  @@map("audit_log")
+}
+
+// Challenge-response authentication state (see BACKEND_SPEC.md
+// Authentication section). A challenge is single-use: `consumed` must
+// transition false -> true exactly once per nonce, enforced via an
+// atomic conditional update at the application layer (see
+// src/services/authChallenge.ts) — this schema alone does not guarantee
+// that; the @unique constraint on `nonce` only prevents duplicate rows,
+// not concurrent double-consumption of the same row.
+model AuthChallenge {
+  id              Int      @id @default(autoincrement())
+  nonce           String   @unique
+  did             String
+  expectedAddress String   @map("expected_address")
+  issuedAt        DateTime @map("issued_at")
+  expiresAt       DateTime @map("expires_at")
+  consumed        Boolean  @default(false)
+
+  // (did, consumed) is not on the current documented lookup path (which
+  // looks up by nonce first — see BACKEND_SPEC.md step 1), but is added
+  // as a forward-looking index for a plausible future need: checking
+  // whether a DID already has an outstanding unconsumed challenge before
+  // issuing a new one (basic anti-spam). Cheap to add now; not required
+  // by anything currently implemented.
+  @@index([did, consumed])
+  @@index([expiresAt])
+  @@map("auth_challenges")
+}

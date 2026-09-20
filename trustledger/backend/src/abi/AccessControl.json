@@ -1,0 +1,262 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "identityRegistryAddress",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "assetId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "requesterDID",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "permissionId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "AssetAccessed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "permissionId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "assetId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "subjectDID",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum AccessControl.Action",
+        "name": "action",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum AccessControl.PermissionState",
+        "name": "state",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "grantedBy",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "validFrom",
+        "type": "uint256"
+      }
+    ],
+    "name": "PermissionChanged",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "assetId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "subjectDID",
+        "type": "string"
+      },
+      {
+        "internalType": "enum AccessControl.Action",
+        "name": "action",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint256",
+        "name": "atTimestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "checkPermissionAtTime",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "permissionId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "assetId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "subjectDID",
+            "type": "string"
+          },
+          {
+            "internalType": "enum AccessControl.Action",
+            "name": "action",
+            "type": "uint8"
+          },
+          {
+            "internalType": "enum AccessControl.PermissionState",
+            "name": "state",
+            "type": "uint8"
+          },
+          {
+            "internalType": "string",
+            "name": "grantedBy",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "validFrom",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "validUntil",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct AccessControl.Permission",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "assetId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "subjectDID",
+        "type": "string"
+      },
+      {
+        "internalType": "enum AccessControl.Action",
+        "name": "action",
+        "type": "uint8"
+      }
+    ],
+    "name": "checkPermissionNow",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "allowed",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "identityRegistry",
+    "outputs": [
+      {
+        "internalType": "contract IdentityRegistry",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "assetId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "requesterDID",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "permissionId",
+        "type": "uint256"
+      }
+    ],
+    "name": "recordAccess",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "assetId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "subjectDID",
+        "type": "string"
+      },
+      {
+        "internalType": "enum AccessControl.Action",
+        "name": "action",
+        "type": "uint8"
+      },
+      {
+        "internalType": "enum AccessControl.PermissionState",
+        "name": "state",
+        "type": "uint8"
+      }
+    ],
+    "name": "setPermission",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

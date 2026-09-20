@@ -1,0 +1,27 @@
+# Dependencies (regenerated via npm install)
+node_modules/
+
+# Build output
+dist/
+backend/dist/
+
+# Hardhat build artifacts (regenerated via hardhat compile)
+contracts/artifacts/
+contracts/cache/
+
+# Environment / secrets — NEVER commit these
+.env
+.env.local
+*.env
+backend/.env
+contracts/.env
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+npm-debug.log*
+*.log

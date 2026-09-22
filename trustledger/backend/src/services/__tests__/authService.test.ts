@@ -59,10 +59,10 @@ describe("authService", () => {
     const result = await service.createChallenge(DID);
 
     expect(result.expiresAt).toBe(new Date(NOW.getTime() + CHALLENGE_TTL_MS).toISOString());
-    expect(result.message).toContain("TrustLedger Authentication Request");
+    expect(result.message).toContain("PRAMAAN Authentication Request");
     expect(result.message).toContain("Domain: trustledger.local");
     expect(result.message).toContain(`DID: ${DID}`);
-    expect(result.message).toContain("Purpose: Authenticate to TrustLedger backend");
+    expect(result.message).toContain("Purpose: Authenticate to PRAMAAN backend");
     expect(result.message).toMatch(/\nNonce: [0-9a-f]{32}\n/);
     expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({
       did: DID,

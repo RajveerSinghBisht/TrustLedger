@@ -1,4 +1,4 @@
-// TrustLedger backend — Prisma schema
+// PRAMAAN backend — Prisma schema
 //
 // IMPORTANT, per DATA_MODEL.md: this database is NOT authoritative for
 // identity, role, permissions, ownership, or asset integrity — those are

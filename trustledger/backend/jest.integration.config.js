@@ -25,4 +25,5 @@ module.exports = {
   // headroom without masking an actual hang (which would still fail,
   // just after 30s instead of 5s).
   testTimeout: 30000,
+  maxWorkers: 1, // Run only one test at a time to avoid port conflicts
 };

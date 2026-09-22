@@ -1,8 +1,8 @@
 {
-  "name": "trustledger-backend",
+  "name": "pramaan-backend",
   "version": "0.1.0",
   "private": true,
-  "description": "TrustLedger backend API — auth, asset registration, proof bundles",
+  "description": "PRAMAAN backend API — auth, asset registration, proof bundles",
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
@@ -15,25 +15,30 @@
     "prisma:migrate": "prisma migrate dev"
   },
   "dependencies": {
-    "express": "^5.2.1",
-    "ethers": "^6.13.0",
-    "jsonwebtoken": "^9.0.0",
     "@prisma/client": "^5.17.0",
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.0",
+    "ethers": "^6.13.0",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.0",
     "multer": "^2.2.0",
-    "dotenv": "^16.4.0"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
-    "typescript": "^5.5.0",
-    "ts-node-dev": "^2.0.0",
-    "prisma": "^5.17.0",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.2.0",
-    "@types/jest": "^29.5.0",
-    "supertest": "^7.0.0",
-    "@types/supertest": "^6.0.0",
-    "@types/node": "^20.14.0",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.0",
+    "@types/jest": "^29.5.0",
     "@types/jsonwebtoken": "^9.0.0",
-    "@types/multer": "^2.0.0"
+    "@types/multer": "^2.0.0",
+    "@types/node": "^20.14.0",
+    "@types/supertest": "^6.0.0",
+    "jest": "^29.7.0",
+    "prisma": "^5.17.0",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.5.0"
   }
 }

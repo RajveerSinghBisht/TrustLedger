@@ -1,4 +1,6 @@
 import express from "express";
+import cors from "cors";
+import helmet from "helmet";
 import { PrismaClient } from "@prisma/client";
 import { AuthChallengeRepository } from "./repositories/authChallenge";
 import { UserRepository } from "./repositories/user";
@@ -11,6 +13,7 @@ import { createAssetsRouter } from "./routes/assets";
 import { createProofBundlesRouter } from "./routes/proofBundles";
 import { createAuthService } from "./services/authService";
 import { getConfig, verifyContractsDeployed } from "./config";
+import { globalLimiter } from "./middleware/rateLimiter";
 
 const config = getConfig();
 
@@ -41,22 +44,54 @@ async function start(): Promise<void> {
   const authService = createAuthService({ challengeRepository });
 
   const app = express();
-  app.use(express.json());
+
+  // -----------------------------------------------------------------------
+  // OWASP: Security headers via helmet — sets HSTS, X-Content-Type-Options,
+  // X-Frame-Options (DENY), X-XSS-Protection, CSP defaults, etc.
+  // Applied BEFORE any route handler runs.
+  // -----------------------------------------------------------------------
+  app.use(helmet());
+
+  // -----------------------------------------------------------------------
+  // OWASP: Global IP-based rate limiter — 100 req/15min per IP by default.
+  // Applied BEFORE routing so even 404s and preflight requests count
+  // toward the limit, preventing reconnaissance-based abuse.
+  // -----------------------------------------------------------------------
+  app.use(globalLimiter);
+
+  // Allow the frontend dev server to communicate with the backend.
+  // Defaults to Vite's standard development origin.
+  app.use(
+    cors({
+      origin: process.env.FRONTEND_ORIGIN || "http://localhost:5173",
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+    })
+  );
+
+  // OWASP: limit JSON body size to 1MB to prevent large-payload DoS.
+  // The default (~100KB) is already reasonable, but making it explicit
+  // documents the intent and makes it visible in the code.
+  app.use(express.json({ limit: "1mb" }));
+
   app.use("/api/auth", createAuthRouter(authService));
   app.use("/api/identities", createIdentitiesRouter(userRepository));
   app.use("/api/permissions", createPermissionsRouter());
+
   app.use(
     "/api/assets",
     createAssetsRouter(encryptedRecordRepository, auditLogRepository)
   );
+
   app.use("/api/proof-bundles", createProofBundlesRouter());
 
   const server = app.listen(config.port, () => {
-    console.log(`TrustLedger backend listening on port ${config.port}`);
+    console.log(`PRAMAAN backend listening on port ${config.port}`);
   });
 
   async function shutdown(signal: string) {
     console.log(`Received ${signal}, shutting down...`);
+
     server.close(async () => {
       await prisma.$disconnect();
       process.exit(0);

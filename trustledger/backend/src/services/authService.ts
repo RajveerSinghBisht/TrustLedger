@@ -46,10 +46,10 @@ function canonicalMessage(input: {
   expiresAt: Date;
 }): string {
   return [
-    "TrustLedger Authentication Request",
+    "PRAMAAN Authentication Request",
     "",
     `Domain: ${input.domain}`,
-    "Purpose: Authenticate to TrustLedger backend",
+    "Purpose: Authenticate to PRAMAAN backend",
     `DID: ${input.did}`,
     `Nonce: ${input.nonce}`,
     `Issued At: ${input.issuedAt.toISOString()}`,
@@ -170,6 +170,10 @@ export function createAuthService(deps: AuthServiceDependencies) {
         throw error;
       }
 
+      // OWASP: use the dedicated JWT signing secret (config.jwtSecret),
+      // NOT backendSigningPrivateKey directly. jwtSecret defaults to
+      // backendSigningPrivateKey for backward compatibility but can be
+      // set independently via JWT_SECRET env var.
       const token = jwt.sign(
         {
           did: challenge.did,
@@ -178,7 +182,7 @@ export function createAuthService(deps: AuthServiceDependencies) {
           iat: issuedAtSeconds,
           exp: expiresAtSeconds,
         },
-        config.backendSigningPrivateKey,
+        config.jwtSecret,
         { algorithm: "HS256"}
       );
 

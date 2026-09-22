@@ -1,0 +1,292 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: var(--font-instrument-serif), "Instrument Serif", Georgia, serif;
+  --font-sans: var(--font-instrument), "Instrument Sans", system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), "JetBrains Mono", monospace;
+  --font-display: var(--font-instrument-serif), "Instrument Serif", Georgia, serif;
+}
+
+:root,
+:root[data-theme="light"] {
+  --bg: #fafaf9;
+  --surface: #ffffff;
+  --surface-hover: #f5f4f0;
+  --border: #dad7d0;
+  --border-hover: #bebab1;
+  --text-primary: #080503;
+  --text-muted: #5e534a;
+  --text-faint: #8d8277;
+  --accent: #080503;
+  --accent-hover: #26211d;
+  --accent-text: #fafaf9;
+  --success: #059669;
+  --success-bg: #ecfdf5;
+  --success-border: #a7f3d0;
+  --danger: #e11d48;
+  --danger-bg: #fff1f2;
+  --danger-border: #fecdd3;
+  --warning: #d97706;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+}
+
+:root[data-theme="dark"] {
+  --bg: #080503;
+  --surface: #110e0b;
+  --surface-hover: #1c1713;
+  --border: #28221b;
+  --border-hover: #40372d;
+  --text-primary: #fafaf9;
+  --text-muted: #a69c92;
+  --text-faint: #635a51;
+  --accent: #fafaf9;
+  --accent-hover: #e7e4dd;
+  --accent-text: #080503;
+  --success: #10b981;
+  --success-bg: #064e3b;
+  --success-border: #047857;
+  --danger: #f43f5e;
+  --danger-bg: #4c0519;
+  --danger-border: #9f1239;
+  --warning: #f59e0b;
+  --warning-bg: #451a03;
+  --warning-border: #92400e;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Tactile matte paper noise texture (Optimus style) */
+.noise-overlay {
+  position: relative;
+}
+
+.noise-overlay::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  opacity: 0.035;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* Precision drafting grid */
+.grid-blueprint {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, var(--border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-position: top center;
+}
+
+/* Text outline effect (Optimus style) */
+.text-stroke {
+  -webkit-text-stroke: 1.5px currentColor;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Animations with 60fps GPU acceleration */
+@keyframes char-in {
+  0% {
+    opacity: 0;
+    filter: blur(20px);
+    transform: translate3d(0, 100%, 0);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-char-in {
+  opacity: 0;
+  filter: blur(20px);
+  animation: 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards char-in;
+  transform: translate3d(0, 100%, 0);
+  will-change: transform, opacity, filter;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes marquee-reverse {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.marquee {
+  display: flex;
+  width: max-content;
+  animation: 58s linear infinite marquee;
+  will-change: transform;
+}
+
+.marquee-reverse {
+  display: flex;
+  width: max-content;
+  animation: 26s linear infinite marquee-reverse;
+  will-change: transform;
+}
+
+.marquee:hover,
+.marquee-reverse:hover {
+  animation-play-state: paused;
+}
+
+@keyframes progress {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+.code-line-reveal {
+  opacity: 0;
+  animation: 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards lineReveal;
+  transform: translate3d(-8px, 0, 0);
+  will-change: transform, opacity;
+}
+
+@keyframes lineReveal {
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.code-char-reveal {
+  opacity: 0;
+  filter: blur(6px);
+  animation: 0.25s cubic-bezier(0.22, 1, 0.36, 1) forwards charReveal;
+  will-change: opacity, filter;
+}
+
+@keyframes charReveal {
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
+}
+
+.hover-lift:hover {
+  transform: translate3d(0, -3px, 0);
+}
+
+/* Navigation animated underline */
+.nav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.nav-link::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 1.5px;
+  background-color: var(--accent);
+  transition: width 200ms ease;
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+  width: 100%;
+}
+
+/* Tactical system badges */
+.sys-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.125em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  color: var(--text-muted);
+}
+
+/* Custom thin scrollbar */
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-hover) transparent;
+}
+
+.scroll-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: var(--border-hover);
+  border-radius: 3px;
+}
+
+/* Form input styling */
+.input-base {
+  display: block;
+  width: 100%;
+  border-radius: 0.375rem;
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  padding: 0.6rem 0.85rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--text-primary);
+  transition-property: color, background-color, border-color, box-shadow;
+  transition-duration: 150ms;
+}
+
+.input-base::placeholder {
+  color: var(--text-faint);
+}
+
+.input-base:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}

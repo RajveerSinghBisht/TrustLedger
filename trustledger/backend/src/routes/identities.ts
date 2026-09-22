@@ -8,6 +8,13 @@ import {
 } from "../services/identityRegistryService";
 import { authorizationService } from "../services/authorizationService";
 import { ethers } from "ethers";
+import { authenticatedWriteLimiter, publicReadLimiter } from "../middleware/rateLimiter";
+import {
+  validateBody,
+  validateParams,
+  registerIdentitySchema,
+  identityDidParamSchema,
+} from "../middleware/inputValidation";
 
 /**
  * IdentityRegistry.sol's authoritative enum orderings — see the
@@ -59,6 +66,12 @@ export function createIdentitiesRouter(
   router.post(
     "/",
     authenticateJWT,
+    // OWASP: user-based rate limiter keyed on JWT did — prevents a
+    // compromised account from flooding privileged write endpoints.
+    authenticatedWriteLimiter,
+    // OWASP: schema-based validation — enforces types, lengths, format,
+    // enum values; rejects unexpected fields via .strict().
+    validateBody(registerIdentitySchema),
     async (req: Request, res: Response) => {
       const authedReq = req as AuthenticatedRequest;
 
@@ -81,24 +94,8 @@ export function createIdentitiesRouter(
         });
       }
 
-      const body = req.body ?? {};
-      if (
-        typeof body.identityAddress !== "string" ||
-        !body.identityAddress.trim() ||
-        typeof body.did !== "string" ||
-        !body.did.trim() ||
-        typeof body.publicKey !== "string" ||
-        !body.publicKey.trim() ||
-        !isValidRole(body.role) ||
-        typeof body.displayName !== "string" ||
-        !body.displayName.trim()
-      ) {
-        return res.status(400).json({
-          error:
-            "identityAddress, did, publicKey, role, and displayName are all required",
-          code: "INVALID_REQUEST",
-        });
-      }
+      // req.body is now validated and stripped by Zod — safe to use directly.
+      const body = req.body;
 
       try {
         const { txHash } = await registerIdentity({
@@ -143,46 +140,47 @@ export function createIdentitiesRouter(
    * GET /api/identities/:did — not authenticated, per BACKEND_SPEC.md
    * ("identity lookups are not sensitive in this scope").
    */
-  router.get("/:did", async (req: Request, res: Response) => {
-    const did = req.params.did;
+  router.get(
+    "/:did",
+    // OWASP: public read rate limiter (60 req/15min per IP)
+    publicReadLimiter,
+    // OWASP: validate the DID param format and length
+    validateParams(identityDidParamSchema),
+    async (req: Request, res: Response) => {
+      // After Zod validation, did is guaranteed to be a string.
+      const did = req.params.did as string;
 
-    if (typeof did !== "string" || !did.trim()) {
-      return res.status(400).json({
-        error: "did is required",
-        code: "INVALID_REQUEST",
-      });
-    }
+      try {
+        // resolveDID/getIdentity both live in identityRegistryService.
+        // resolveDID gives us the address first since getIdentity takes an
+        // address, not a DID.
+        const address = await resolveDID(did);
 
-    try {
-      // resolveDID/getIdentity both live in identityRegistryService.
-      // resolveDID gives us the address first since getIdentity takes an
-      // address, not a DID.
-      const address = await resolveDID(did);
+        if (address === ethers.ZeroAddress) {
+          return res.status(404).json({
+            error: "Unknown DID",
+            code: "IDENTITY_NOT_FOUND",
+          });
+        }
 
-      if (address === ethers.ZeroAddress) {
+        const identity = await getIdentity(address);
+        const user = await userRepository.findByDid(did);
+
+        return res.status(200).json({
+          did: identity.did,
+          role: CONTRACT_ROLE_NAMES[identity.role] ?? "UNKNOWN",
+          status: CONTRACT_STATUS_NAMES[identity.status] ?? "UNKNOWN",
+          displayName: user?.displayName ?? null,
+          createdAt: identity.createdAt.toString(),
+        });
+      } catch {
         return res.status(404).json({
           error: "Unknown DID",
           code: "IDENTITY_NOT_FOUND",
         });
       }
-
-      const identity = await getIdentity(address);
-      const user = await userRepository.findByDid(did);
-
-      return res.status(200).json({
-        did: identity.did,
-        role: CONTRACT_ROLE_NAMES[identity.role] ?? "UNKNOWN",
-        status: CONTRACT_STATUS_NAMES[identity.status] ?? "UNKNOWN",
-        displayName: user?.displayName ?? null,
-        createdAt: identity.createdAt.toString(),
-      });
-    } catch {
-      return res.status(404).json({
-        error: "Unknown DID",
-        code: "IDENTITY_NOT_FOUND",
-      });
     }
-  });
+  );
 
   return router;
 }

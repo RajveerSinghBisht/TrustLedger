@@ -57,61 +57,72 @@ export function authenticateJWT(
 
   const token = match[1];
 
-  try {
-    const config = getConfig();
-
-    const decoded = jwt.verify(
-      token,
-      config.backendSigningPrivateKey,
-      {
-        algorithms: ["HS256"],
-      }
-    );
-
-    if (
-      typeof decoded !== "object" ||
-      decoded === null
-    ) {
-      unauthorizedResponse(res);
-      return;
-    }
-
-    const {
-      did,
-      address,
-      role,
-      iat,
-      exp,
-    } = decoded;
-
-    if (
-      typeof did !== "string" ||
-      did.trim() === "" ||
-      typeof address !== "string" ||
-      address.trim() === "" ||
-      !isJwtRole(role) ||
-      typeof iat !== "number" ||
-      !Number.isFinite(iat) ||
-      typeof exp !== "number" ||
-      !Number.isFinite(exp)
-    ) {
-      unauthorizedResponse(res);
-      return;
-    }
-
-    const authenticatedRequest =
-      req as AuthenticatedRequest;
-
-    authenticatedRequest.auth = {
-      did,
-      address,
-      role,
-      iat,
-      exp,
-    };
-
-    next();
-  } catch {
-    unauthorizedResponse(res);
+  // OWASP: key rotation support — try the current JWT_SECRET first,
+  // then fall back to JWT_SECRET_PREVIOUS if set. This enables
+  // zero-downtime key rotation: deploy with new key → wait for all
+  // old JWTs to expire (15 min) → remove the previous key.
+  const config = getConfig();
+  const keysToTry: string[] = [config.jwtSecret];
+  if (config.jwtSecretPrevious) {
+    keysToTry.push(config.jwtSecretPrevious);
   }
+
+  let decoded: jwt.JwtPayload | null = null;
+
+  for (const secret of keysToTry) {
+    try {
+      const result = jwt.verify(token, secret, {
+        algorithms: ["HS256"],
+      });
+      if (typeof result === "object" && result !== null) {
+        decoded = result;
+        break;
+      }
+    } catch {
+      // Try the next key (if any). Only if ALL keys fail do we
+      // return 401 below.
+      continue;
+    }
+  }
+
+  if (!decoded) {
+    unauthorizedResponse(res);
+    return;
+  }
+
+  const {
+    did,
+    address,
+    role,
+    iat,
+    exp,
+  } = decoded;
+
+  if (
+    typeof did !== "string" ||
+    did.trim() === "" ||
+    typeof address !== "string" ||
+    address.trim() === "" ||
+    !isJwtRole(role) ||
+    typeof iat !== "number" ||
+    !Number.isFinite(iat) ||
+    typeof exp !== "number" ||
+    !Number.isFinite(exp)
+  ) {
+    unauthorizedResponse(res);
+    return;
+  }
+
+  const authenticatedRequest =
+    req as AuthenticatedRequest;
+
+  authenticatedRequest.auth = {
+    did,
+    address,
+    role,
+    iat,
+    exp,
+  };
+
+  next();
 }

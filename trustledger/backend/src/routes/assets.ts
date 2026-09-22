@@ -15,8 +15,22 @@ import { checkPermissionNow, checkPermissionAtTime, recordAccess } from "../serv
 import { encryptDocument, decryptDocument } from "../services/documentEncryption";
 import { generateProofBundle } from "../services/proofBundle";
 import { authorizationService } from "../services/authorizationService";
+import { authenticatedWriteLimiter, publicReadLimiter } from "../middleware/rateLimiter";
+import {
+  validateParams,
+  assetIdParamSchema,
+  sanitizeFilename,
+} from "../middleware/inputValidation";
 
-const upload = multer({ storage: multer.memoryStorage() });
+// OWASP: limit file upload size to 50MB to prevent large-payload DoS.
+// This is enforced at the multer level, before file bytes are buffered
+// in memory.
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50 MB
+  },
+});
 
 const VALID_CLASSIFICATIONS = new Set(["PUBLIC", "INTERNAL", "CONFIDENTIAL"]);
 
@@ -78,6 +92,8 @@ export function createAssetsRouter(
   router.post(
     "/",
     authenticateJWT,
+    // OWASP: user-based rate limiter keyed on JWT did
+    authenticatedWriteLimiter,
     upload.single("file"),
     async (req: Request, res: Response) => {
       const authedReq = req as AuthenticatedRequest;
@@ -104,15 +120,19 @@ export function createAssetsRouter(
       const file = (req as Request & { file?: Express.Multer.File }).file;
       const body = req.body ?? {};
 
+      // OWASP: validate multipart body fields. Note: for multipart form
+      // data, Zod's .strict() doesn't apply because multer parses form
+      // fields into req.body as strings. Validation is done inline here.
       if (
         !file ||
         typeof body.ownerDID !== "string" ||
         !body.ownerDID.trim() ||
+        body.ownerDID.length > 256 ||
         !isValidClassification(body.classification)
       ) {
         return res.status(400).json({
           error:
-            "A file upload plus ownerDID and classification (PUBLIC|INTERNAL|CONFIDENTIAL) are required",
+            "A file upload plus ownerDID (max 256 chars) and classification (PUBLIC|INTERNAL|CONFIDENTIAL) are required",
           code: "INVALID_REQUEST",
         });
       }
@@ -191,41 +211,42 @@ export function createAssetsRouter(
    * on-chain Asset struct with non-sensitive Postgres metadata
    * (original_filename, mime_type) — never the encrypted blob itself.
    */
-  router.get("/:assetId", async (req: Request, res: Response) => {
-    const assetIdParam = req.params.assetId;
+  router.get(
+    "/:assetId",
+    // OWASP: public read rate limiter (60 req/15min per IP)
+    publicReadLimiter,
+    // OWASP: validate assetId param is a non-negative integer string
+    validateParams(assetIdParamSchema),
+    async (req: Request, res: Response) => {
+      // After Zod validation, assetId is guaranteed to be a string.
+      const assetIdParam = req.params.assetId as string;
 
-    if (typeof assetIdParam !== "string" || !assetIdParam.trim()) {
-      return res.status(400).json({
-        error: "assetId is required",
-        code: "INVALID_REQUEST",
-      });
+      try {
+        const asset = await getAsset(assetIdParam);
+        const record = await encryptedRecordRepository.findByMetadataUri(
+          asset.metadataURI
+        );
+
+        return res.status(200).json({
+          assetId: bigintToNumber(asset.assetId),
+          assetHash: asset.assetHash,
+          ownerDID: asset.ownerDID,
+          metadataURI: asset.metadataURI,
+          classification: asset.classification,
+          status: asset.status,
+          version: bigintToNumber(asset.version),
+          createdAt: bigintToNumber(asset.createdAt),
+          originalFilename: record?.originalFilename ?? null,
+          mimeType: record?.mimeType ?? null,
+        });
+      } catch {
+        return res.status(404).json({
+          error: "Asset not found",
+          code: "ASSET_NOT_FOUND",
+        });
+      }
     }
-
-    try {
-      const asset = await getAsset(assetIdParam);
-      const record = await encryptedRecordRepository.findByMetadataUri(
-        asset.metadataURI
-      );
-
-      return res.status(200).json({
-        assetId: bigintToNumber(asset.assetId),
-        assetHash: asset.assetHash,
-        ownerDID: asset.ownerDID,
-        metadataURI: asset.metadataURI,
-        classification: asset.classification,
-        status: asset.status,
-        version: bigintToNumber(asset.version),
-        createdAt: bigintToNumber(asset.createdAt),
-        originalFilename: record?.originalFilename ?? null,
-        mimeType: record?.mimeType ?? null,
-      });
-    } catch {
-      return res.status(404).json({
-        error: "Asset not found",
-        code: "ASSET_NOT_FOUND",
-      });
-    }
-  });
+  );
 
   /**
    * GET /api/assets/:assetId/download — requires a valid JWT. Per
@@ -258,16 +279,12 @@ export function createAssetsRouter(
   router.get(
     "/:assetId/download",
     authenticateJWT,
+    // OWASP: validate assetId param is a non-negative integer string
+    validateParams(assetIdParamSchema),
     async (req: Request, res: Response) => {
       const authedReq = req as AuthenticatedRequest;
-      const assetIdParam = req.params.assetId;
-
-      if (typeof assetIdParam !== "string" || !assetIdParam.trim()) {
-        return res.status(400).json({
-          error: "assetId is required",
-          code: "INVALID_REQUEST",
-        });
-      }
+      // After Zod validation, assetId is guaranteed to be a string.
+      const assetIdParam = req.params.assetId as string;
 
       let allowed: boolean;
       try {
@@ -481,9 +498,13 @@ export function createAssetsRouter(
         record.mimeType ?? "application/octet-stream"
       );
       if (record.originalFilename) {
+        // OWASP: sanitize the filename before inserting into the
+        // Content-Disposition header to prevent header injection
+        // attacks via control characters or path traversal.
+        const safeName = sanitizeFilename(record.originalFilename);
         res.setHeader(
           "Content-Disposition",
-          `attachment; filename="${record.originalFilename}"`
+          `attachment; filename="${safeName}"`
         );
       }
       return res.status(200).send(plaintext);

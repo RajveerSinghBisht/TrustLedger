@@ -21,6 +21,18 @@ interface Config {
   databaseUrl: string;
   port: number;
   authDomain: string;
+  /**
+   * OWASP: separate JWT signing secret from proof-bundle signing key.
+   * Defaults to BACKEND_SIGNING_PRIVATE_KEY for backward compatibility.
+   * Set JWT_SECRET in .env to decouple them.
+   */
+  jwtSecret: string;
+  /**
+   * OWASP: zero-downtime key rotation — when set, JWT verification
+   * falls back to this key if the primary JWT_SECRET fails. After all
+   * old JWTs expire (15 min), remove this variable.
+   */
+  jwtSecretPrevious: string | null;
 }
 
 function requireEnv(name: string): string {
@@ -64,6 +76,47 @@ function requireHexPrivateKey(name: string): string {
   return value;
 }
 
+/**
+ * OWASP: validate that a signing key has sufficient entropy.
+ * Requires at least 32 bytes (64 hex chars) of key material.
+ * The key may optionally have a 0x prefix.
+ */
+function requireMinEntropyKey(name: string): string {
+  const value = requireEnv(name);
+  const hexPart = value.startsWith("0x") ? value.slice(2) : value;
+  if (hexPart.length < 64 || !/^[a-fA-F0-9]+$/.test(hexPart)) {
+    throw new Error(
+      `Environment variable ${name} must be at least 32 bytes of hex ` +
+        `(64 hex characters, with optional 0x prefix) to provide ` +
+        `adequate signing entropy. Got ${hexPart.length} hex characters.`
+    );
+  }
+  return value;
+}
+
+/**
+ * OWASP: validate DOCUMENT_MASTER_KEY format at startup rather than
+ * deferring to first use. A misconfigured master key that only fails
+ * on the first encrypt/decrypt call is a confusing failure mode.
+ */
+function requireHexKey(name: string, requiredBytes: number): string {
+  const value = requireEnv(name);
+  const raw = value.trim();
+  if (!/^[0-9a-fA-F]+$/.test(raw)) {
+    throw new Error(
+      `${name} must be a hex-encoded string (got non-hex characters).`
+    );
+  }
+  const decoded = Buffer.from(raw, "hex");
+  if (decoded.length !== requiredBytes) {
+    throw new Error(
+      `${name} must decode to exactly ${requiredBytes} bytes ` +
+        `(${requiredBytes * 2} hex characters) — got ${decoded.length} bytes.`
+    );
+  }
+  return value;
+}
+
 let cachedConfig: Config | null = null;
 
 /**
@@ -76,17 +129,70 @@ export function getConfig(): Config {
     return cachedConfig;
   }
 
+  // OWASP: warn (but don't throw) if BACKEND_SIGNING_PRIVATE_KEY has
+  // insufficient entropy. Per the existing test suite's documented
+  // design, this key is NOT required to be a real Ethereum-shaped key
+  // — only non-empty — so a hard throw here would break that contract.
+  // In production, operators should use a key with >= 32 bytes of
+  // entropy (64 hex chars).
+  const backendSigningKey = requireEnv("BACKEND_SIGNING_PRIVATE_KEY");
+  {
+    const hexPart = backendSigningKey.startsWith("0x")
+      ? backendSigningKey.slice(2)
+      : backendSigningKey;
+    if (hexPart.length < 64 || !/^[a-fA-F0-9]+$/.test(hexPart)) {
+      console.warn(
+        "[SECURITY WARNING] BACKEND_SIGNING_PRIVATE_KEY has less than " +
+          "32 bytes of hex entropy. This is acceptable for local " +
+          "development but MUST be replaced with a strong key " +
+          "(e.g. `openssl rand -hex 32`) in production."
+      );
+    }
+  }
+
+  // OWASP: warn (but don't throw) if DOCUMENT_MASTER_KEY isn't proper
+  // 32-byte hex. The runtime encryption module (documentEncryption.ts)
+  // performs the hard validation on first use — this warning surfaces
+  // the problem at startup for operators, without breaking test
+  // fixtures that use obviously-non-hex placeholder values.
+  const docMasterKey = requireEnv("DOCUMENT_MASTER_KEY");
+  {
+    const raw = docMasterKey.trim();
+    if (
+      !/^[0-9a-fA-F]+$/.test(raw) ||
+      Buffer.from(raw, "hex").length !== 32
+    ) {
+      console.warn(
+        "[SECURITY WARNING] DOCUMENT_MASTER_KEY does not appear to be " +
+          "a valid 32-byte hex key. The encryption module will reject " +
+          "it at first use. Generate with: openssl rand -hex 32"
+      );
+    }
+  }
+
+  // OWASP: JWT_SECRET defaults to BACKEND_SIGNING_PRIVATE_KEY for
+  // backward compatibility. Set JWT_SECRET explicitly to decouple
+  // JWT signing from proof-bundle signing.
+  const jwtSecret = process.env.JWT_SECRET?.trim() || backendSigningKey;
+
+  // OWASP: JWT_SECRET_PREVIOUS enables zero-downtime key rotation.
+  // Set it to the OLD key when rotating, remove after all old JWTs
+  // expire (15 min).
+  const jwtSecretPrevious = process.env.JWT_SECRET_PREVIOUS?.trim() || null;
+
   cachedConfig = {
     hardhatRpcUrl: requireEnv("HARDHAT_RPC_URL"),
     identityRegistryAddress: requireEthAddress("IDENTITY_REGISTRY_ADDRESS"),
     accessControlAddress: requireEthAddress("ACCESS_CONTROL_ADDRESS"),
     assetRegistryAddress: requireEthAddress("ASSET_REGISTRY_ADDRESS"),
     relayerPrivateKey: requireHexPrivateKey("RELAYER_PRIVATE_KEY"),
-    backendSigningPrivateKey: requireEnv("BACKEND_SIGNING_PRIVATE_KEY"),
-    documentMasterKey: requireEnv("DOCUMENT_MASTER_KEY"),
+    backendSigningPrivateKey: backendSigningKey,
+    documentMasterKey: docMasterKey,
     databaseUrl: requireEnv("DATABASE_URL"),
     port: parseInt(process.env.PORT || "3000", 10),
     authDomain: requireEnv("AUTH_DOMAIN"),
+    jwtSecret,
+    jwtSecretPrevious,
   };
 
   // Explicit, deliberate check per BACKEND_SPEC.md: these two keys must

@@ -1,11 +1,11 @@
-# TrustLedger
+# PRAMAAN
 
 Blockchain-based identity, access control, and digital asset management platform.
 Built for SIH Problem Statement 26125 (Bharat Electronics Limited).
 
 ## What this is
 
-TrustLedger secures compliance, maintenance, and spares-authorization records for
+PRAMAAN secures compliance, maintenance, and spares-authorization records for
 BEL systems with 20-30 year service lives. Every identity is a Decentralized
 Identifier (DID). Every record is hashed, encrypted off-chain, and represented
 on-chain as a unique NFT. Role-Based Access Control (Admin/Manager/Auditor/User)

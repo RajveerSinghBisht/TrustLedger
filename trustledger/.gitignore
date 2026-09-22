@@ -1,20 +1,57 @@
-# Dependencies (regenerated via npm install)
-node_modules/
+# ==============================================================================
+# .gitignore for trustledger/ directory
+# ==============================================================================
 
-# Build output
+# Dependencies
+node_modules/
+**/node_modules/
+.pnp
+.pnp.js
+
+# Frontend & Next.js Build Outputs
+frontend/.next/
+.next/
+out/
+build/
 dist/
 backend/dist/
+.turbo/
 
-# Hardhat build artifacts (regenerated via hardhat compile)
+# TypeScript Build Caches
+*.tsbuildinfo
+next-env.d.ts.bak
+
+# Hardhat build artifacts
 contracts/artifacts/
 contracts/cache/
+artifacts/
+cache/
+typechain/
+typechain-types/
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
 
 # Environment / secrets — NEVER commit these
 .env
-.env.local
+.env.*
 *.env
 backend/.env
 contracts/.env
+frontend/.env
+frontend/.env*.local
+!**/.env.example
+
+# Credentials
+*.pem
+*.key
+
+# Testing & Coverage
+coverage/
+*.lcov
 
 # OS / editor noise
 .DS_Store
@@ -24,4 +61,7 @@ Thumbs.db
 
 # Logs
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 *.log
+logs/

@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Hardhat build artifacts
+artifacts/
+cache/
+typechain/
+typechain-types/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Testing & Coverage
+coverage/
+coverage.json
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

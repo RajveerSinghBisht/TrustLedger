@@ -41,3 +41,7 @@ yarn-error.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# Next.js Agent files
+AGENTS.md
+CLAUDE.md

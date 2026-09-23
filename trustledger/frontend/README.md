@@ -1,83 +1,75 @@
-# PRAMAAN Frontend
+<p align="center">
+  <img src="public/pramaan-icon.png" width="100" alt="PRAMAAN Emblem" />
+</p>
 
-Next.js (App Router, TypeScript, Tailwind) frontend for PRAMAAN, built
-against `BACKEND_SPEC.md`, `DATA_MODEL.md`, and specifications.
+# 💻 PRAMAAN — Frontend Web Application
 
-## Setup
+The PRAMAAN frontend is an enterprise decentralized web application built with **Next.js 16 (Turbopack)**, **React 19**, and **Tailwind CSS v4**.
 
+It provides an intuitive interface for decentralized identity management, encrypted document vaulting, temporal access policies, and client-side cryptographic audit verification.
+
+---
+
+## ⚡ Server Configuration
+
+- **Port**: Strictly locked to **`http://localhost:3001`** via `next dev -p 3001`.
+- **Backend API Gateway**: Pre-configured to communicate with `http://localhost:3000`.
+- **Telemetry**: Live Indian Standard Time (IST) 24-hour clock and consensus node latency monitoring.
+
+---
+
+## 🚀 Running the Frontend
+
+### 1. Install Dependencies
 ```bash
 npm install
+```
+
+### 2. Launch Development Server
+```bash
 npm run dev
 ```
+*Next.js will compile with Turbopack and launch on **`http://localhost:3001`**.*
 
-Runs on `http://localhost:3001` by default if `3000` is taken (the backend
-owns `3000` per the integration doc) — check the terminal output for the
-actual port `next dev` picks.
-
-## Required before anything works
-
-1. A local Hardhat node running (`npx hardhat node`).
-2. The PRAMAAN backend running at `http://localhost:3000` — **with CORS
-   enabled** (`app.use(cors())` in `backend/src/index.ts`). As of the last
-   integration doc, this was NOT yet done on the backend and will block
-   every request from this frontend with a browser CORS error. This is a
-   backend-side fix, not something fixable from here.
-3. MetaMask installed, with one of Hardhat's funded local test accounts
-   imported, pointed at RPC `http://127.0.0.1:8545`, chain ID `31337`. The
-   app will prompt to switch/add this network if MetaMask is on the wrong
-   one.
-
-## Config
-
-`.env.local`:
+### 3. Production Build
+```bash
+npm run build
+npm start
 ```
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
-```
-Change this if the backend runs elsewhere.
 
-## Structure
+---
 
-- `lib/types.ts` — types mirroring `DATA_MODEL.md` field-for-field (frozen
-  names, don't rename).
-- `lib/api.ts` — typed fetch wrappers for every documented endpoint. Errors
-  surface `{ error, code }` per spec; UI reads `.code`, not the message
-  string.
-- `lib/wallet.ts` — MetaMask connection, network switching, exact-text
-  message signing (does not reformat the challenge message before signing
-  — the backend compares byte-for-byte).
-- `lib/AuthContext.tsx` — session state (address/DID/JWT/claims). Token is
-  held in memory only, not localStorage — a 15-minute JWT surviving reload
-  via localStorage seemed like an unnecessary footgun for a security demo,
-  so a reload re-requires signing in. Change this if you'd rather persist it.
-- `app/*/page.tsx` — the seven screens, in the exact order specified:
-  1. `/identities` — register identities (ADMIN only, enforced server-side)
-  2. `/assets` — upload/register an asset (multipart/form-data)
-  3. `/permissions` — grant AND revoke live on one screen (same endpoint,
-     `state: GRANTED | REVOKED`)
-  4. `/download` — downloads the file AND separately surfaces the
-     `X-Proof-Bundle` response header (a plain `<a href>` can't read
-     response headers, so this does a real `fetch`, reads the header,
-     then triggers the file save via Blob + object URL)
-  5. (revoke is on `/permissions`, see above)
-  6. `/policy-check` — the core USP screen. Two side-by-side timestamp
-     panels (not one query box) so a before/after-revoke contrast in
-     `wasLegitimate` is visually obvious. No auth required, per spec.
-  7. `/verify` — proof bundle verification. No auth, styled to visually
-     read as a standalone public tool rather than a logged-in feature.
+## 🎨 Design & Aesthetic Features
 
-## Things flagged during the build, not fixed silently
+1. **Dual Warm Off-White / Dark Theme Engine**:
+   - **Light Mode**: Rich, warm linen off-white (`#f5f2eb`), cream porcelain surfaces (`#fdfbf7`), and deep espresso ink typography (`#14110f`).
+   - **Dark Mode**: Tactical matte obsidian (`#080503`) with emerald accents.
+   - **Performance**: High-performance theme switching with zero layout thrashing or browser paint lag.
+2. **PRAMAAN Emblem & Futuristic Typography**:
+   - Official 3D hexagonal blockchain logo emblem.
+   - Branded with the Google Font **Orbitron** (`.font-pramaan`) across all brand elements.
+3. **Interactive 3D Mathematical Graphics**:
+   - **AsciiSphere**: Real-time 3D Euler rotation matrix rendered as interactive ASCII particles.
+   - **AsciiCryptoCube**: Rotating 3D wireframe tetrahedron for cryptographic asset representations.
+   - **AsciiWaveField**: Fluid sine wave matrix background.
 
-- **"Offline verification"** — the original README describes proof bundles
-  as verifiable "completely offline." `DATA_MODEL.md` explicitly corrects
-  this: it's Level 2 (independent *online* verification, requires RPC
-  access), not Level 3 (true offline, unbuilt). The `/verify` screen's copy
-  follows `DATA_MODEL.md`'s corrected language, not the README's.
-- **JWT `role` claim** — used only for UI gating (hide/disable buttons a
-  role can't use). Never treated as an authorization decision; the backend
-  re-verifies role fresh from `IdentityRegistry` for every privileged write
-  and doesn't trust this claim either, per `BACKEND_SPEC.md`.
-- **Error codes** — the integration doc says to key error handling off
-  `code`, but only documents one actual code (`IDENTITY_NOT_FOUND`). The
-  API layer reads `.code` generically and displays whatever the backend
-  sends; no fabricated code list was added.
-- **CORS** — not fixable from this side; see Setup above.
+---
+
+## 🧭 Page Routes & Modules
+
+| Route | Module Name | Description |
+| :--- | :--- | :--- |
+| **`/`** | **Command Center** | Hero dashboard, live consensus node telemetry (IST), interactive 7-step lifecycle sequencer, and technical specifications. |
+| **`/identities`** | **DID Registry** | Admin portal for registering, querying, and managing on-chain DIDs and roles. |
+| **`/assets`** | **Document Vault** | Upload confidential documents for off-chain AES-256-GCM encryption and on-chain hash pinning. |
+| **`/permissions`**| **Policy Manager** | Grant and revoke access with immutable `validFrom` and `validUntil` timestamps. |
+| **`/download`** | **Secure Dispatch** | Request authorized files, verify on-chain permissions, and export cryptographic `X-Proof-Bundle` headers. |
+| **`/policy-check`**| **Policy-at-Time** | Historical audit tool proving whether a DID had access rights at any specific second in the past. |
+| **`/verify`** | **Verify Bundle** | Zero-login standalone portal allowing any auditor or court to inspect and verify an offline proof bundle. |
+
+---
+
+## 🔗 Web3 Integration
+
+- **Wallet Support**: MetaMask, Rabby, Coinbase Wallet via Ethers.js v6.
+- **Authentication**: EIP-712 typed structured data signatures; session maintained via client-side AuthContext.

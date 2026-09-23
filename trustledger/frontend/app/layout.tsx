@@ -4,7 +4,13 @@ import { ThemeProvider } from "@/lib/ThemeContext";
 import { AuthProvider } from "@/lib/AuthContext";
 import { NavBar } from "@/components/NavBar";
 import { NetworkBanner } from "@/components/NetworkBanner";
-import { Instrument_Serif, Instrument_Sans, JetBrains_Mono } from "next/font/google";
+import { Instrument_Serif, Instrument_Sans, JetBrains_Mono, Orbitron } from "next/font/google";
+
+const orbitron = Orbitron({
+  subsets: ["latin"],
+  variable: "--font-orbitron",
+  display: "swap",
+});
 
 const instrumentSerif = Instrument_Serif({
   weight: "400",
@@ -29,6 +35,11 @@ export const metadata: Metadata = {
   title: "PRAMAAN™ — Enterprise Blockchain Access Control & Cryptographic Audits",
   description:
     "The zero-trust document security infrastructure for teams who ship. On-chain access policies, verifiable proof bundles, and cryptographic temporal audits.",
+  icons: {
+    icon: "/pramaan-icon.png",
+    shortcut: "/pramaan-icon.png",
+    apple: "/pramaan-icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -39,7 +50,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${instrumentSerif.variable} ${instrumentSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${instrumentSerif.variable} ${instrumentSans.variable} ${jetbrainsMono.variable} ${orbitron.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

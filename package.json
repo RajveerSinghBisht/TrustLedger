@@ -1,0 +1,10 @@
+{
+  "name": "pramaan-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PRAMAAN — Zero-Trust Blockchain Access Control & Cryptographic Audits (SIH 2026 // PS 26125)",
+  "scripts": {
+    "start:all": "node trustledger/start-all.js",
+    "dev:all": "node trustledger/start-all.js"
+  }
+}

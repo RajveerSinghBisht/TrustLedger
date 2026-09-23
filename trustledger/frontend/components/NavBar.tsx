@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import { useTheme } from "@/lib/ThemeContext";
@@ -29,7 +30,14 @@ export function NavBar() {
   useEffect(() => {
     function updateClock() {
       const now = new Date();
-      setTimeStr(now.toUTCString().slice(17, 25) + " UTC");
+      const istTime = now.toLocaleTimeString("en-GB", {
+        timeZone: "Asia/Kolkata",
+        hour12: false,
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+      setTimeStr(`${istTime} IST`);
     }
     updateClock();
     const interval = setInterval(updateClock, 1000);
@@ -58,15 +66,27 @@ export function NavBar() {
       </div>
 
       {/* Main Navigation Bar */}
-      <div className="mx-auto max-w-[1400px] px-6 lg:px-8 h-18 flex items-center justify-between gap-6">
+      <div className="mx-auto max-w-350 px-6 lg:px-8 h-18 flex items-center justify-between gap-6">
         <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-baseline gap-1.5 group">
-            <span className="font-display tracking-tight text-2xl lg:text-3xl text-(--text-primary) group-hover:opacity-80 transition-opacity">
-              PRAMAAN
-            </span>
-            <span className="text-(--text-muted) font-mono text-[11px] tracking-widest">
-              TM
-            </span>
+          <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group">
+            <div className="relative w-8 h-8 lg:w-9 lg:h-9 shrink-0 transition-transform duration-300 group-hover:scale-105">
+              <Image
+                src="/pramaan-icon.png"
+                alt="PRAMAAN Emblem"
+                width={36}
+                height={36}
+                className="w-full h-full object-contain filter drop-shadow-[0_2px_8px_rgba(16,185,129,0.3)]"
+                priority
+              />
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-pramaan font-bold tracking-wider text-xl lg:text-2xl text-(--text-primary) group-hover:opacity-85 transition-opacity">
+                PRAMAAN
+              </span>
+              <span className="text-(--text-muted) font-mono text-[10px] tracking-widest px-1.5 py-0.5 rounded border border-(--border) bg-(--surface)/60">
+                TM
+              </span>
+            </div>
           </Link>
 
           <nav className="hidden lg:flex items-center gap-6 text-sm">
@@ -159,6 +179,22 @@ export function NavBar() {
         style={{ top: "100px" }}
       >
         <div className="flex flex-col h-[calc(100vh-100px)] px-8 pt-6 pb-12 overflow-y-auto">
+          <div className="flex items-center gap-3 pb-5 mb-3 border-b border-(--border)/60">
+            <Image
+              src="/pramaan-icon.png"
+              alt="PRAMAAN Emblem"
+              width={32}
+              height={32}
+              className="w-8 h-8 object-contain"
+            />
+            <span className="font-pramaan font-bold tracking-wider text-lg text-(--text-primary)">
+              PRAMAAN
+            </span>
+            <span className="ml-auto font-mono text-[11px] text-(--text-muted) px-2 py-0.5 rounded border border-(--border)">
+              {timeStr}
+            </span>
+          </div>
+
           <div className="flex-1 flex flex-col justify-center gap-6">
             {links.map((l, idx) => (
               <Link

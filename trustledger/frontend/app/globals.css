@@ -5,24 +5,25 @@
   --font-sans: var(--font-instrument), "Instrument Sans", system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), "JetBrains Mono", monospace;
   --font-display: var(--font-instrument-serif), "Instrument Serif", Georgia, serif;
+  --font-pramaan: var(--font-orbitron), "Orbitron", system-ui, sans-serif;
 }
 
 :root,
 :root[data-theme="light"] {
-  --bg: #fafaf9;
-  --surface: #ffffff;
-  --surface-hover: #f5f4f0;
-  --border: #dad7d0;
-  --border-hover: #bebab1;
-  --text-primary: #080503;
-  --text-muted: #5e534a;
-  --text-faint: #8d8277;
-  --accent: #080503;
-  --accent-hover: #26211d;
-  --accent-text: #fafaf9;
+  --bg: #f5f2eb;
+  --surface: #fdfbf7;
+  --surface-hover: #ece6dc;
+  --border: #ded7ca;
+  --border-hover: #c4bba9;
+  --text-primary: #14110f;
+  --text-muted: #61574d;
+  --text-faint: #92877a;
+  --accent: #14110f;
+  --accent-hover: #2b241f;
+  --accent-text: #f5f2eb;
   --success: #059669;
-  --success-bg: #ecfdf5;
-  --success-border: #a7f3d0;
+  --success-bg: #eaf7ef;
+  --success-border: #a3e2bb;
   --danger: #e11d48;
   --danger-bg: #fff1f2;
   --danger-border: #fecdd3;
@@ -70,6 +71,11 @@ body {
 
 .font-mono {
   font-family: var(--font-mono);
+}
+
+.font-pramaan {
+  font-family: var(--font-pramaan);
+  letter-spacing: 0.08em;
 }
 
 /* Tactile matte paper noise texture (Optimus style) */

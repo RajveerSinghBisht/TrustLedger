@@ -109,7 +109,7 @@ export function AsciiCryptoCube({ className = "w-full h-full" }: AsciiCryptoCube
         (!document.documentElement.getAttribute("data-theme") &&
           window.matchMedia("(prefers-color-scheme: dark)").matches);
 
-      const baseColor = isDark ? "250, 250, 249" : "8, 5, 3";
+      const baseColor = isDark ? "250, 250, 249" : "20, 17, 15";
 
       const points: Array<{ x: number; y: number; z: number; char: string }> = [];
 

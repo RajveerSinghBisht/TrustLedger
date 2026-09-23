@@ -65,3 +65,15 @@ yarn-debug.log*
 yarn-error.log*
 *.log
 logs/
+
+# AI Agent & Assistant Workspaces
+.gemini/
+.cursor/
+.claude/
+
+# Gas Reporter & Database Dumps
+gasReporterOutput.json
+hardhat.log
+pgdata/
+postgres-data/
+*.dump

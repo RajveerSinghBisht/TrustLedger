@@ -1,0 +1,14 @@
+{
+  "name": "pramaan-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PRAMAAN — Zero-Trust Blockchain Access Control & Cryptographic Audits (SIH 2026 // PS 26125)",
+  "scripts": {
+    "start:all": "node start-all.js",
+    "dev:all": "node start-all.js",
+    "deploy:contracts": "npm run deploy:local --prefix contracts",
+    "build:backend": "npm run build --prefix backend",
+    "build:frontend": "npm run build --prefix frontend",
+    "build": "npm run build:backend && npm run build:frontend"
+  }
+}

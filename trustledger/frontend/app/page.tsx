@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/lib/AuthContext";
 import { Card, Badge } from "@/components/ui";
 import { AsciiSphere } from "@/components/AsciiSphere";
@@ -396,10 +397,20 @@ export default function Home() {
   // Mouse spotlight coordinates
   const [spotlight, setSpotlight] = useState({ x: 50, y: 50 });
 
-  // Clock for telemetry
+  // Clock for telemetry (IST 24-hr format)
   const [clock, setClock] = useState("");
   useEffect(() => {
-    const update = () => setClock(new Date().toUTCString().slice(17, 25) + " UTC");
+    const update = () => {
+      const now = new Date();
+      const istTime = now.toLocaleTimeString("en-GB", {
+        timeZone: "Asia/Kolkata",
+        hour12: false,
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+      setClock(`${istTime} IST`);
+    };
     update();
     const id = setInterval(update, 1000);
     return () => clearInterval(id);
@@ -429,7 +440,7 @@ export default function Home() {
       ========================================================================= */}
       <section className="relative min-h-[90vh] flex flex-col justify-center overflow-hidden border-b border-(--border)">
         {/* Background 3D ASCII Sphere */}
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[500px] h-[500px] lg:w-[750px] lg:h-[750px] opacity-35 pointer-events-none">
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-125 h-125 lg:w-187.5 lg:h-187.5 opacity-35 pointer-events-none">
           <AsciiSphere />
         </div>
 
@@ -452,7 +463,7 @@ export default function Home() {
         </div>
 
         {/* Hero Content */}
-        <div className="relative z-10 max-w-[1400px] mx-auto px-6 lg:px-12 py-24 lg:py-32">
+        <div className="relative z-10 max-w-350 mx-auto px-6 lg:px-12 py-24 lg:py-32">
           {/* Subtitle / System Kicker */}
           <div className="mb-8">
             <span className="inline-flex items-center gap-3 text-xs sm:text-sm font-mono text-(--text-muted)">
@@ -541,7 +552,7 @@ export default function Home() {
           SECTION 2: CAPABILITIES (Optimus Features Style)
       ========================================================================= */}
       <section id="features" className="relative py-24 lg:py-32 border-b border-(--border)">
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+        <div className="max-w-350 mx-auto px-6 lg:px-12">
           <div className="mb-16 lg:mb-24">
             <span className="inline-flex items-center gap-3 text-xs sm:text-sm font-mono text-(--text-muted) mb-6">
               <span className="w-8 h-px bg-(--text-primary)/30" />
@@ -666,7 +677,7 @@ export default function Home() {
           SECTION 3: LIVE METRICS & SESSION HUD (Optimus Live Metrics Style)
       ========================================================================= */}
       <section id="metrics" className="relative py-24 lg:py-32 border-b border-(--border)">
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+        <div className="max-w-350 mx-auto px-6 lg:px-12">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 mb-16 lg:mb-24">
             <div>
               <span className="inline-flex items-center gap-3 text-xs sm:text-sm font-mono text-(--text-muted) mb-6">
@@ -794,7 +805,7 @@ export default function Home() {
           />
         </div>
 
-        <div className="relative z-10 max-w-[1400px] mx-auto px-6 lg:px-12">
+        <div className="relative z-10 max-w-350 mx-auto px-6 lg:px-12">
           <div className="mb-16 lg:mb-24">
             <span className="inline-flex items-center gap-3 text-xs sm:text-sm font-mono text-(--bg)/60 mb-6">
               <span className="w-8 h-px bg-(--bg)/30" />
@@ -871,7 +882,7 @@ export default function Home() {
                   </span>
                 </div>
 
-                <div className="p-6 lg:p-8 font-mono text-xs sm:text-sm min-h-[280px]">
+                <div className="p-6 lg:p-8 font-mono text-xs sm:text-sm min-h-70">
                   <pre className="text-(--bg)/80 overflow-x-auto scroll-thin">
                     {lifecycleSteps[activeStep].code.split("\n").map((line, lIdx) => (
                       <div
@@ -920,7 +931,7 @@ export default function Home() {
           SECTION 5: INFRASTRUCTURE & CONSENSUS (Optimus Infrastructure Style)
       ========================================================================= */}
       <section id="infrastructure" className="relative py-24 lg:py-32 border-b border-(--border) overflow-hidden">
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+        <div className="max-w-350 mx-auto px-6 lg:px-12">
           <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
             <div>
               <span className="inline-flex items-center gap-3 text-xs sm:text-sm font-mono text-(--text-muted) mb-6">
@@ -999,7 +1010,7 @@ export default function Home() {
           SECTION 6: DEVELOPER SDK TERMINAL (Optimus Developers Style)
       ========================================================================= */}
       <section id="developers" className="relative py-24 lg:py-32 border-b border-(--border) overflow-hidden">
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+        <div className="max-w-350 mx-auto px-6 lg:px-12">
           <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-start">
             <div>
               <span className="inline-flex items-center gap-3 text-xs sm:text-sm font-mono text-(--text-muted) mb-6">
@@ -1066,7 +1077,7 @@ export default function Home() {
                 </button>
               </div>
 
-              <div className="p-6 lg:p-8 font-mono text-xs sm:text-sm bg-(--bg) min-h-[220px]">
+              <div className="p-6 lg:p-8 font-mono text-xs sm:text-sm bg-(--bg) min-h-55">
                 <pre className="text-(--text-primary)/90 overflow-x-auto scroll-thin">
                   {devSnippets[devTab].code.split("\n").map((line, lIdx) => (
                     <div key={`${devTab}-${lIdx}`} className="leading-loose">
@@ -1084,7 +1095,7 @@ export default function Home() {
           SECTION 7: SPOTLIGHT VERIFIER CARD (Optimus CTA Style)
       ========================================================================= */}
       <section className="relative py-24 lg:py-32 overflow-hidden border-b border-(--border)">
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+        <div className="max-w-350 mx-auto px-6 lg:px-12">
           <div
             className="relative border border-(--text-primary) rounded-3xl overflow-hidden transition-all duration-700 hover:shadow-2xl"
             onMouseMove={(e) => {
@@ -1134,7 +1145,7 @@ export default function Home() {
                 </div>
 
                 {/* 3D ASCII Crypto Cube Visualizer */}
-                <div className="w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] lg:w-[450px] lg:h-[450px] shrink-0">
+                <div className="w-75 h-75 sm:w-100 sm:h-100 lg:w-112.5 lg:h-112.5 shrink-0">
                   <AsciiCryptoCube />
                 </div>
               </div>
@@ -1152,12 +1163,19 @@ export default function Home() {
           <AsciiWaveField />
         </div>
 
-        <div className="relative z-10 max-w-[1400px] mx-auto px-6 lg:px-12 py-16 lg:py-24">
+        <div className="relative z-10 max-w-350 mx-auto px-6 lg:px-12 py-16 lg:py-24">
           <div className="grid grid-cols-2 md:grid-cols-6 gap-12 lg:gap-8">
             <div className="col-span-2">
-              <Link href="/" className="inline-flex items-baseline gap-1.5 mb-4">
-                <span className="text-2xl font-display text-(--text-primary)">PRAMAAN</span>
-                <span className="text-[10px] font-mono text-(--text-muted)">TM</span>
+              <Link href="/" className="inline-flex items-center gap-2.5 mb-4 group">
+                <Image
+                  src="/pramaan-icon.png"
+                  alt="PRAMAAN Emblem"
+                  width={28}
+                  height={28}
+                  className="w-7 h-7 object-contain"
+                />
+                <span className="text-xl font-pramaan font-bold tracking-wider text-(--text-primary)">PRAMAAN</span>
+                <span className="text-[10px] font-mono text-(--text-muted) px-1 py-0.5 rounded border border-(--border)">TM</span>
               </Link>
               <p className="text-xs text-(--text-muted) leading-relaxed mb-6 max-w-xs">
                 Zero-trust document authorization at block speed. Smart India Hackathon 2026 Problem Statement 26125.
@@ -1203,7 +1221,7 @@ export default function Home() {
           </div>
 
           <div className="mt-16 pt-8 border-t border-(--border) flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-mono text-(--text-muted)">
-            <p>© 2026 PRAMAAN™. Built for Smart India Hackathon (SIH 2026).</p>
+            <p>© 2026 <span className="font-pramaan font-bold">PRAMAAN</span>™. Built for Smart India Hackathon (SIH 2026).</p>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-(--success) animate-pulse" />
               <span>All Systems Operational · Hardhat Node 31337</span>

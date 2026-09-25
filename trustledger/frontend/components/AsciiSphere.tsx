@@ -114,7 +114,7 @@ export function AsciiSphere({ className = "w-full h-full" }: AsciiSphereProps) {
       }
 
       if (!prefersReducedMotion) {
-        angle += 0.020;
+        angle += 0.010;
       }
 
       animId = requestAnimationFrame(render);

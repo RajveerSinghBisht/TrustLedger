@@ -16,6 +16,7 @@ import {
   decodeJwtPayload,
   isJwtExpired,
   getCurrentChainId,
+  switchToHardhatNetwork,
   HARDHAT_CHAIN_ID,
 } from "./wallet";
 import type { JwtClaims } from "./types";
@@ -31,6 +32,7 @@ interface AuthState {
 }
 
 interface AuthContextValue extends AuthState {
+  secondsRemaining: number | null;
   loginWithWallet: () => Promise<void>;
   logout: () => void;
   checkNetwork: () => Promise<void>;
@@ -54,6 +56,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading: false,
     error: null,
   });
+
+  const [secondsRemaining, setSecondsRemaining] = useState<number | null>(null);
 
   const checkNetwork = useCallback(async () => {
     try {
@@ -82,23 +86,80 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!cancelled) setState((s) => ({ ...s, isOnHardhat: null }));
       }
     })();
+    const handleAccountsChanged = (accounts: unknown) => {
+      const accs = accounts as string[];
+      if (!accs || accs.length === 0) {
+        setState((s) => ({
+          ...s,
+          address: null,
+          did: null,
+          token: null,
+          claims: null,
+          error: null,
+        }));
+      } else {
+        setState((s) => {
+          if (s.address && accs[0].toLowerCase() !== s.address.toLowerCase()) {
+            return {
+              ...s,
+              address: null,
+              did: null,
+              token: null,
+              claims: null,
+              error: null,
+            };
+          }
+          return s;
+        });
+      }
+    };
+
+    const handleChainChanged = () => {
+      checkNetwork();
+    };
+
+    window.ethereum.on("accountsChanged", handleAccountsChanged);
+    window.ethereum.on("chainChanged", handleChainChanged);
+
     return () => {
       cancelled = true;
+      window.ethereum?.removeListener("accountsChanged", handleAccountsChanged);
+      window.ethereum?.removeListener("chainChanged", handleChainChanged);
     };
-  }, []);
+  }, [checkNetwork]);
 
   const loginWithWallet = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: null }));
     try {
       const address = await connectWallet();
-      const chainId = await getCurrentChainId();
-      const isOnHardhat = chainId === HARDHAT_CHAIN_ID;
+      let chainId = await getCurrentChainId();
+      let isOnHardhat = chainId === HARDHAT_CHAIN_ID;
+
+      // If user's wallet is on Mainnet/Sepolia/etc., automatically trigger MetaMask's network switch prompt
+      if (!isOnHardhat) {
+        try {
+          await switchToHardhatNetwork();
+          chainId = await getCurrentChainId();
+          isOnHardhat = chainId === HARDHAT_CHAIN_ID;
+        } catch (switchErr: unknown) {
+          const switchMsg =
+            switchErr instanceof Error ? switchErr.message : String(switchErr);
+          setState((s) => ({
+            ...s,
+            loading: false,
+            isOnHardhat: false,
+            error: `Wallet is on chain ID ${chainId}. Please switch to Hardhat Local (${HARDHAT_CHAIN_ID}) in MetaMask. ${switchMsg}`,
+          }));
+          return;
+        }
+      }
+
       if (!isOnHardhat) {
         setState((s) => ({
           ...s,
           loading: false,
           isOnHardhat: false,
-          error: `Wallet is connected to chain ID ${chainId}, not the local Hardhat network (${HARDHAT_CHAIN_ID}). Switch networks before authenticating.`,
+          error: `Wallet is connected to chain ID ${chainId}, not the local Hardhat network (${HARDHAT_CHAIN_ID}). Switch networks in MetaMask before authenticating.`,
         }));
         return;
       }
@@ -125,13 +186,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading: false,
         error: null,
       }));
-    } catch (err) {
-      const message =
+    } catch (err: unknown) {
+      let message =
         err instanceof ApiRequestError
           ? `${err.message} (${err.code})`
           : err instanceof Error
           ? err.message
           : "Unknown error during authentication.";
+
+      const errCode = (err as { code?: number | string })?.code;
+      if (
+        message.includes("already pending") ||
+        message.includes("eth_requestAccounts") ||
+        errCode === -32002
+      ) {
+        message =
+          "MetaMask has an approval window open in the background! Please click the MetaMask fox icon in your browser toolbar to approve.";
+      } else if (
+        message.includes("User rejected") ||
+        message.includes("user rejected") ||
+        errCode === 4001
+      ) {
+        message = "Connection or signature request was cancelled in MetaMask.";
+      }
+
       setState((s) => ({ ...s, loading: false, error: message }));
     }
   }, []);
@@ -139,6 +217,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     setState((s) => ({
       ...s,
+      address: null,
+      did: null,
       token: null,
       claims: null,
       error: null,
@@ -156,11 +236,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ? state.token
       : null;
 
+  useEffect(() => {
+    if (!state.claims?.exp || !effectiveToken) {
+      setSecondsRemaining(null);
+      return;
+    }
+
+    const updateRemaining = () => {
+      const remaining = Math.max(
+        0,
+        state.claims!.exp - Math.floor(Date.now() / 1000)
+      );
+      setSecondsRemaining(remaining);
+      if (remaining <= 0) {
+        logout();
+      }
+    };
+
+    updateRemaining();
+    const interval = setInterval(updateRemaining, 1000);
+    return () => clearInterval(interval);
+  }, [state.claims, effectiveToken, logout]);
+
+  // Prompt user before reload if active authenticated session is present
+  useEffect(() => {
+    if (!effectiveToken) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      try {
+        sessionStorage.setItem("pramaan_session_reloaded", "true");
+      } catch {}
+      e.preventDefault();
+      e.returnValue = "Reloading will terminate your active cryptographic session. Are you sure you want to reload?";
+      return e.returnValue;
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [effectiveToken]);
+
   return (
     <AuthContext.Provider
       value={{
         ...state,
         token: effectiveToken,
+        secondsRemaining,
         loginWithWallet,
         logout,
         checkNetwork,

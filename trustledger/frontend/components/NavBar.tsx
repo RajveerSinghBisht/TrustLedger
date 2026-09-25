@@ -10,18 +10,49 @@ import { Menu, X, ArrowRight } from "@/components/Icons";
 import { useEffect, useState } from "react";
 
 const links = [
-  { href: "/", label: "Home", tag: "00" },
-  { href: "/identities", label: "Identities", tag: "01" },
-  { href: "/assets", label: "Assets", tag: "02" },
-  { href: "/permissions", label: "Permissions", tag: "03" },
-  { href: "/download", label: "Download", tag: "04" },
-  { href: "/policy-check", label: "Policy-at-Time", tag: "05" },
-  { href: "/verify", label: "Verify Bundle", tag: "06" },
+  { href: "/", label: "Home", shortLabel: "Home", tag: "00" },
+  { href: "/identities", label: "Identities", shortLabel: "Identities", tag: "01" },
+  { href: "/assets", label: "Assets", shortLabel: "Assets", tag: "02" },
+  { href: "/permissions", label: "Permissions", shortLabel: "Permissions", tag: "03" },
+  { href: "/download", label: "Download", shortLabel: "Download", tag: "04" },
+  { href: "/policy-check", label: "Policy Check", shortLabel: "Policy", tag: "05" },
+  { href: "/verify", label: "Verify Bundle", shortLabel: "Verify", tag: "06" },
 ];
+
+function formatCountdown(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+}
+
+function getTimerBadgeStyle(sec: number) {
+  if (sec <= 60) {
+    return {
+      container:
+        "border-rose-500/70 bg-rose-500/15 text-rose-300 shadow-[0_0_18px_rgba(244,63,94,0.4)] animate-pulse font-bold",
+      icon: "🚨",
+      title: "CRITICAL: Session expiring in less than 60 seconds! Reconnect to avoid timeout.",
+    };
+  }
+  if (sec <= 300) {
+    return {
+      container:
+        "border-amber-500/60 bg-amber-500/10 text-amber-300 shadow-[0_0_16px_rgba(245,158,11,0.3)] animate-pulse font-semibold",
+      icon: "⚠️",
+      title: "Session expiring in less than 5 minutes. Reconnect wallet before timeout.",
+    };
+  }
+  return {
+    container:
+      "border-cyan-500/40 bg-cyan-500/5 text-cyan-300 hover:border-cyan-500/60 shadow-[0_0_12px_rgba(6,182,212,0.16)]",
+    icon: "⏱",
+    title: "Active 15-minute defense JWT session countdown",
+  };
+}
 
 export function NavBar() {
   const pathname = usePathname();
-  const { address, did, claims, token, loading, error, loginWithWallet, logout } =
+  const { address, did, claims, token, secondsRemaining, loading, error, loginWithWallet, logout } =
     useAuth();
   const { theme, toggleTheme } = useTheme();
   const [timeStr, setTimeStr] = useState("");
@@ -47,18 +78,18 @@ export function NavBar() {
   return (
     <header className="sticky top-0 z-50 border-b border-(--border) bg-(--bg)/90 backdrop-blur-md transition-colors duration-300">
       {/* Top Telemetry Ticker Bar */}
-      <div className="border-b border-(--border)/60 px-4 sm:px-8 h-7 flex items-center justify-between text-[11px] font-mono tracking-widest text-(--text-muted) bg-(--surface)/40">
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5">
+      <div className="border-b border-(--border)/60 px-4 sm:px-6 lg:px-8 h-7 flex items-center justify-between text-[11px] font-mono tracking-widest text-(--text-muted) bg-(--surface)/40">
+        <div className="flex items-center gap-3 sm:gap-4 overflow-hidden text-ellipsis whitespace-nowrap">
+          <span className="flex items-center gap-1.5 shrink-0">
             <span className="w-1.5 h-1.5 rounded-full bg-(--success) animate-pulse" />
             <span className="text-(--text-primary) font-semibold">ALL_SYSTEMS_OPERATIONAL</span>
           </span>
           <span className="hidden md:inline text-(--border)">|</span>
-          <span className="hidden md:inline">HARDHAT_NETWORK: 31337</span>
-          <span className="hidden lg:inline text-(--border)">|</span>
-          <span className="hidden lg:inline">SIH PROTOCOL ENGINE 26125</span>
+          <span className="hidden md:inline shrink-0">HARDHAT_NETWORK: 31337</span>
+          <span className="hidden 2xl:inline text-(--border)">|</span>
+          <span className="hidden 2xl:inline shrink-0">SIH PROTOCOL ENGINE 26125</span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
           <span className="tabular-nums text-(--text-muted)">{timeStr || "SYSTEM ACTIVE"}</span>
           <span className="text-(--border)">|</span>
           <span className="font-mono text-xs text-(--text-primary)">v1.0.4</span>
@@ -66,9 +97,10 @@ export function NavBar() {
       </div>
 
       {/* Main Navigation Bar */}
-      <div className="mx-auto max-w-350 px-6 lg:px-8 h-18 flex items-center justify-between gap-6">
-        <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group">
+      <div className="mx-auto max-w-[1600px] w-full px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-3 xl:gap-6">
+        {/* Left: Brand & Navigation Links */}
+        <div className="flex items-center gap-3 xl:gap-6 2xl:gap-8 shrink-0">
+          <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group shrink-0">
             <div className="relative w-8 h-8 lg:w-9 lg:h-9 shrink-0 transition-transform duration-300 group-hover:scale-105">
               <Image
                 src="/pramaan-icon.png"
@@ -83,66 +115,81 @@ export function NavBar() {
               <span className="font-pramaan font-bold tracking-wider text-xl lg:text-2xl text-(--text-primary) group-hover:opacity-85 transition-opacity">
                 PRAMAAN
               </span>
-              <span className="text-(--text-muted) font-mono text-[10px] tracking-widest px-1.5 py-0.5 rounded border border-(--border) bg-(--surface)/60">
+              <span className="hidden sm:inline text-(--text-muted) font-mono text-[10px] tracking-widest px-1.5 py-0.5 rounded border border-(--border) bg-(--surface)/60">
                 TM
               </span>
             </div>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-6 text-sm">
+          {/* Desktop Nav Links */}
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-2.5 2xl:gap-4 text-xs font-mono">
             {links.map((l) => {
               const isActive = pathname === l.href;
               return (
                 <Link
                   key={l.href}
                   href={l.href}
-                  className={`nav-link py-1 text-xs font-mono tracking-wider transition-colors duration-200 ${
+                  className={`nav-link px-2 py-1 rounded transition-colors duration-200 whitespace-nowrap tracking-wider ${
                     isActive
-                      ? "active text-(--text-primary) font-semibold"
-                      : "text-(--text-muted) hover:text-(--text-primary)"
+                      ? "active text-(--text-primary) font-semibold bg-(--surface)"
+                      : "text-(--text-muted) hover:text-(--text-primary) hover:bg-(--surface)/50"
                   }`}
                 >
-                  <span className="text-(--text-faint) mr-1 text-[10px]">{l.tag}.</span>
-                  {l.label}
+                  <span className="hidden 2xl:inline text-(--text-faint) mr-1 text-[10px]">{l.tag}.</span>
+                  <span className="hidden xl:inline">{l.label}</span>
+                  <span className="xl:hidden">{l.shortLabel}</span>
                 </Link>
               );
             })}
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Theme Toggle Button */}
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="w-9 h-9 rounded-full border border-(--border) hover:border-(--text-primary) bg-(--surface) flex items-center justify-center text-xs font-mono transition-all hover:scale-105"
-            aria-label="Toggle theme"
-            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-          >
-            {theme === "dark" ? "☀" : "☾"}
-          </button>
-
+        {/* Right: Auth State, Session Timer, Actions, Theme Toggle */}
+        <div className="flex items-center gap-2 sm:gap-2.5 xl:gap-3 shrink-0">
           {/* Auth State Button */}
           <div className="hidden sm:flex items-center">
             {loading ? (
-              <div className="inline-flex items-center gap-2 rounded-full border border-(--border) px-4 py-2 text-xs font-mono text-(--text-muted)">
+              <div className="inline-flex items-center gap-2 rounded-full border border-(--border) px-3 py-1.5 text-xs font-mono text-(--text-muted)">
                 <Spinner />
                 <span>CONNECTING...</span>
               </div>
             ) : token && claims ? (
-              <div className="flex items-center gap-2">
-                <span className="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-(--border) bg-(--surface) text-[11px] font-mono">
-                  <span className="w-1.5 h-1.5 rounded-full bg-(--success) animate-pulse" />
-                  <span className="text-(--text-muted)">
-                    {address?.slice(0, 6)}...{address?.slice(-4)}
+              <div className="flex items-center gap-2 sm:gap-2.5 xl:gap-3">
+                {/* Role Badge with Glowing Radar Beacon */}
+                <span className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-xs font-mono shadow-[0_0_12px_rgba(16,185,129,0.12)] transition-all duration-300 shrink-0">
+                  <span className="relative flex h-2 w-2 shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 duration-1000" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
+                  </span>
+                  <span className="text-(--text-muted) tracking-tight">
+                    <span className="hidden xl:inline">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
+                    <span className="xl:hidden">{address?.slice(0, 4)}...{address?.slice(-3)}</span>
                   </span>
                   <span className="text-(--border)">/</span>
-                  <span className="text-(--text-primary) font-bold">{claims.role}</span>
+                  <span className="text-emerald-400 font-bold uppercase tracking-wider text-[11px] sm:text-xs">
+                    {claims.role}
+                  </span>
                 </span>
+
+                {/* Session Countdown Badge with Dynamic Glow */}
+                {secondsRemaining !== null && (() => {
+                  const style = getTimerBadgeStyle(secondsRemaining);
+                  return (
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full border text-xs font-mono transition-all duration-300 shrink-0 select-none ${style.container}`}
+                      title={style.title}
+                    >
+                      <span className="text-[11px] leading-none">{style.icon}</span>
+                      <span className="tracking-wide tabular-nums">{formatCountdown(secondsRemaining)}</span>
+                    </span>
+                  );
+                })()}
+
+                {/* Refined Disconnect Button */}
                 <button
                   type="button"
                   onClick={logout}
-                  className="rounded-full border border-(--border) hover:border-(--danger) hover:text-(--danger) bg-(--surface) px-4 py-2 text-xs font-mono transition-colors"
+                  className="rounded-full border border-(--border)/80 hover:border-rose-500/60 hover:bg-rose-500/10 hover:text-rose-400 hover:shadow-[0_0_14px_rgba(244,63,94,0.25)] bg-(--surface)/70 backdrop-blur-md px-3 sm:px-3.5 py-1.5 text-xs font-mono text-(--text-muted) transition-all duration-200 shrink-0 tracking-wider"
                 >
                   DISCONNECT
                 </button>
@@ -151,13 +198,24 @@ export function NavBar() {
               <button
                 type="button"
                 onClick={loginWithWallet}
-                className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-xs font-mono font-medium bg-(--text-primary) hover:opacity-90 text-(--bg) rounded-full px-5 py-2.5 transition-all duration-300 hover:scale-[1.02] shadow-sm"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-xs font-mono font-medium bg-(--text-primary) hover:opacity-90 text-(--bg) rounded-full px-4 sm:px-5 py-2 transition-all duration-300 hover:scale-[1.02] shadow-sm"
               >
                 <span>CONNECT WALLET</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
+
+          {/* Theme Toggle Button at FAR RIGHT */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="w-8 h-8 rounded-full border border-(--border)/80 hover:border-(--text-primary) hover:shadow-[0_0_10px_rgba(255,255,255,0.15)] bg-(--surface)/70 backdrop-blur-md flex items-center justify-center text-xs font-mono transition-all duration-200 hover:scale-105 shrink-0"
+            aria-label="Toggle theme"
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          >
+            {theme === "dark" ? "☀" : "☾"}
+          </button>
 
           {/* Mobile Menu Toggle */}
           <button
@@ -190,9 +248,13 @@ export function NavBar() {
             <span className="font-pramaan font-bold tracking-wider text-lg text-(--text-primary)">
               PRAMAAN
             </span>
-            <span className="ml-auto font-mono text-[11px] text-(--text-muted) px-2 py-0.5 rounded border border-(--border)">
-              {timeStr}
-            </span>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="ml-auto font-mono text-[11px] text-(--text-muted) px-2.5 py-1 rounded border border-(--border) hover:text-(--text-primary) flex items-center gap-1.5 transition-colors"
+            >
+              <span>{theme === "dark" ? "☀ LIGHT" : "☾ DARK"}</span>
+            </button>
           </div>
 
           <div className="flex-1 flex flex-col justify-center gap-6">
@@ -219,17 +281,24 @@ export function NavBar() {
             style={{ transitionDelay: mobileOpen ? "400ms" : "0ms" }}
           >
             {token && claims ? (
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-xs text-(--text-muted)">
-                  {address?.slice(0, 6)}...{address?.slice(-4)} ({claims.role})
-                </span>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs text-(--text-muted)">
+                    {address?.slice(0, 6)}...{address?.slice(-4)} ({claims.role})
+                  </span>
+                  {secondsRemaining !== null && (
+                    <span className="text-xs font-mono text-cyan-400">
+                      ⏱ {formatCountdown(secondsRemaining)}
+                    </span>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={() => {
                     logout();
                     setMobileOpen(false);
                   }}
-                  className="px-4 py-2 text-xs font-mono text-(--danger) border border-(--danger)/40 rounded-full"
+                  className="w-full py-2.5 text-xs font-mono text-rose-400 border border-rose-500/40 rounded-full hover:bg-rose-500/10 tracking-wider"
                 >
                   DISCONNECT
                 </button>

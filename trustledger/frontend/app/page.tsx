@@ -133,7 +133,7 @@ function grantAccess(
     code: `// ProofBundle.json
 {
   "assetId": "0x7f4a...9b12",
-  "subjectDid": "did:pramaan:0xf3...2266",
+  "subjectDid": "did:trustledger:0xf3...2266",
   "policyVersion": 3,
   "accessedAt": 1727048123,
   "signerSignature": "0x4b7c8...91a2"
@@ -198,7 +198,7 @@ const client = new PRAMAAN({
 // Register on-chain verifiable document
 const asset = await client.registerAsset({
   filePath: './contract-v1.pdf',
-  accessRules: [{ did: 'did:pramaan:0xf3...', permission: 'READ' }]
+  accessRules: [{ did: 'did:trustledger:0xf3...', permission: 'READ' }]
 });`,
   },
   {

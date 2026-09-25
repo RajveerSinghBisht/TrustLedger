@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/lib/ThemeContext";
 import { AuthProvider } from "@/lib/AuthContext";
 import { NavBar } from "@/components/NavBar";
 import { NetworkBanner } from "@/components/NetworkBanner";
+import { SessionResetBanner } from "@/components/SessionResetBanner";
 import { Instrument_Serif, Instrument_Sans, JetBrains_Mono, Orbitron } from "next/font/google";
 
 const orbitron = Orbitron({
@@ -70,6 +71,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <NavBar />
+            <SessionResetBanner />
             <NetworkBanner />
             <main className="flex-1 w-full">
               {children}

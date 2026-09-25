@@ -79,7 +79,7 @@ export default function VerifyPage() {
           <TextArea
             value={raw}
             onChange={(e) => setRaw(e.target.value)}
-            placeholder='{"assetId": 1042, "assetHash": "0x...", "accessedBy": "did:pramaan:...", ...}'
+            placeholder='{"assetId": 1, "assetHash": "0x...", "accessedBy": "did:trustledger:...", ...}'
             rows={10}
           />
           <Button type="submit" disabled={loading || !raw.trim()}>

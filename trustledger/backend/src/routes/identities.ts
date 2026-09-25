@@ -8,12 +8,14 @@ import {
 } from "../services/identityRegistryService";
 import { authorizationService } from "../services/authorizationService";
 import { ethers } from "ethers";
+import { getConfig } from "../config";
 import { authenticatedWriteLimiter, publicReadLimiter } from "../middleware/rateLimiter";
 import {
   validateBody,
   validateParams,
   registerIdentitySchema,
   identityDidParamSchema,
+  updateDisplayNameSchema,
 } from "../middleware/inputValidation";
 
 /**
@@ -177,6 +179,85 @@ export function createIdentitiesRouter(
         return res.status(404).json({
           error: "Unknown DID",
           code: "IDENTITY_NOT_FOUND",
+        });
+      }
+    }
+  );
+
+  /**
+   * PATCH /api/identities/:did — updates off-chain display name for an identity.
+   * Privileged write: Only ADMIN (or the identity themselves if active) can rename.
+   */
+  router.patch(
+    "/:did",
+    authenticateJWT,
+    authenticatedWriteLimiter,
+    validateParams(identityDidParamSchema),
+    validateBody(updateDisplayNameSchema),
+    async (req: Request, res: Response) => {
+      const authedReq = req as AuthenticatedRequest;
+      const did = req.params.did as string;
+
+      const isSelf = authedReq.auth.did === did;
+      try {
+        if (!isSelf) {
+          await authorizationService.requireCurrentRole(
+            authedReq.auth.address,
+            ["ADMIN"]
+          );
+        } else {
+          await authorizationService.requireCurrentRole(
+            authedReq.auth.address,
+            ["ADMIN", "MANAGER", "AUDITOR", "USER"]
+          );
+        }
+      } catch (error) {
+        const code = (error as { code?: string }).code;
+        if (code === "IDENTITY_REVOKED" || code === "INSUFFICIENT_ROLE") {
+          return res.status(403).json({
+            error: "Not authorized to update this identity",
+            code,
+          });
+        }
+        return res.status(500).json({
+          error: "Internal server error",
+          code: "INTERNAL_ERROR",
+        });
+      }
+
+      try {
+        const address = await resolveDID(did);
+        if (address === ethers.ZeroAddress) {
+          return res.status(404).json({
+            error: "Unknown DID",
+            code: "IDENTITY_NOT_FOUND",
+          });
+        }
+
+        // Lock Account #0 (Root Bootstrap Admin) from being renamed
+        const config = getConfig();
+        const rootAdminAddress = new ethers.Wallet(config.relayerPrivateKey).address.toLowerCase();
+        if (address.toLowerCase() === rootAdminAddress) {
+          return res.status(403).json({
+            error: "The Root Admin (Account #0) identity is immutable and cannot be renamed",
+            code: "ROOT_ADMIN_IMMUTABLE",
+          });
+        }
+
+        const identity = await getIdentity(address);
+        const updated = await userRepository.updateDisplayName(did, req.body.displayName);
+
+        return res.status(200).json({
+          did: identity.did,
+          role: CONTRACT_ROLE_NAMES[identity.role] ?? "UNKNOWN",
+          status: CONTRACT_STATUS_NAMES[identity.status] ?? "UNKNOWN",
+          displayName: updated.displayName,
+          createdAt: identity.createdAt.toString(),
+        });
+      } catch {
+        return res.status(500).json({
+          error: "Failed to update identity",
+          code: "UPDATE_FAILED",
         });
       }
     }

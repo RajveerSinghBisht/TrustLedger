@@ -112,6 +112,17 @@ export const identityDidParamSchema = z.object({
   did: didField,
 });
 
+// PATCH /api/identities/:did — body validation
+export const updateDisplayNameSchema = z
+  .object({
+    displayName: z
+      .string()
+      .min(1, "displayName must not be empty")
+      .max(128, "displayName exceeds maximum length of 128 characters")
+      .refine((v) => v.trim().length > 0, "displayName must not be blank"),
+  })
+  .strict();
+
 // POST /api/permissions
 export const setPermissionSchema = z
   .object({

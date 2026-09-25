@@ -25,8 +25,13 @@ export class UserRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async create(input: CreateUserInput): Promise<UserRecord> {
-    return this.prisma.user.create({
-      data: {
+    return this.prisma.user.upsert({
+      where: { did: input.did },
+      update: {
+        displayName: input.displayName,
+        email: input.email,
+      },
+      create: {
         did: input.did,
         displayName: input.displayName,
         email: input.email,
@@ -36,5 +41,13 @@ export class UserRepository {
 
   async findByDid(did: string): Promise<UserRecord | null> {
     return this.prisma.user.findUnique({ where: { did } });
+  }
+
+  async updateDisplayName(did: string, displayName: string): Promise<UserRecord> {
+    return this.prisma.user.upsert({
+      where: { did },
+      update: { displayName },
+      create: { did, displayName },
+    });
   }
 }

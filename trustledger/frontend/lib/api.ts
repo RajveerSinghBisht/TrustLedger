@@ -106,6 +106,22 @@ export async function getIdentity(did: string): Promise<IdentityRecord> {
   return handle<IdentityRecord>(res);
 }
 
+export async function updateIdentityDisplayName(
+  token: string,
+  did: string,
+  displayName: string
+): Promise<IdentityRecord> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/identities/${encodeURIComponent(did)}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...authHeaders(token) },
+      body: JSON.stringify({ displayName }),
+    }
+  );
+  return handle<IdentityRecord>(res);
+}
+
 // ---- Assets ----
 
 export async function registerAsset(

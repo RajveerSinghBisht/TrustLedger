@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
-import { registerIdentity, getIdentity, ApiRequestError } from "@/lib/api";
+import { registerIdentity, getIdentity, updateIdentityDisplayName, ApiRequestError } from "@/lib/api";
 import { addressToDid } from "@/lib/wallet";
 import type { IdentityRecord, Role } from "@/lib/types";
 import {
@@ -40,6 +40,11 @@ export default function IdentitiesPage() {
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
 
+  const [editName, setEditName] = useState("");
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+  const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
+
   const derivedDid = identityAddress ? addressToDid(identityAddress) : "";
 
   // UX-only convenience: the JWT's role claim is a coarse routing hint, not
@@ -67,6 +72,11 @@ export default function IdentitiesPage() {
         displayName,
       });
       setResult(res);
+      // Reset form fields cleanly upon successful registration
+      setIdentityAddress("");
+      setPublicKey("");
+      setDisplayName("");
+      setRole("MANAGER");
     } catch (err) {
       setError(
         err instanceof ApiRequestError
@@ -85,9 +95,12 @@ export default function IdentitiesPage() {
     setLookupLoading(true);
     setLookupError(null);
     setLookupResult(null);
+    setUpdateError(null);
+    setUpdateSuccess(null);
     try {
       const res = await getIdentity(lookupDid);
       setLookupResult(res);
+      setEditName(res.displayName ?? "");
     } catch (err) {
       setLookupError(
         err instanceof ApiRequestError
@@ -96,6 +109,37 @@ export default function IdentitiesPage() {
       );
     } finally {
       setLookupLoading(false);
+    }
+  }
+
+  async function handleUpdateName(e: React.FormEvent) {
+    e.preventDefault();
+    if (!token) {
+      setUpdateError("Not authenticated. Connect wallet and sign in first.");
+      return;
+    }
+    const targetDid = lookupResult?.did || lookupDid;
+    if (!targetDid || !editName.trim()) {
+      setUpdateError("Target DID and new display name are required.");
+      return;
+    }
+    setUpdateLoading(true);
+    setUpdateError(null);
+    setUpdateSuccess(null);
+    try {
+      const updated = await updateIdentityDisplayName(token, targetDid, editName.trim());
+      setLookupResult(updated);
+      setUpdateSuccess(`Display name successfully updated off-chain to "${updated.displayName}".`);
+    } catch (err) {
+      setUpdateError(
+        err instanceof ApiRequestError
+          ? `${err.message} (${err.code})`
+          : err instanceof Error
+          ? err.message
+          : "Update failed."
+      );
+    } finally {
+      setUpdateLoading(false);
     }
   }
 
@@ -226,8 +270,56 @@ export default function IdentitiesPage() {
           </FadeIn>
         )}
         {lookupResult && (
-          <FadeIn className="mt-3">
+          <FadeIn className="mt-4 space-y-4">
             <JsonView data={lookupResult} />
+
+            {token && (
+              <div className="rounded-lg border border-(--border) bg-(--surface)/70 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-(--text-primary)">
+                    Rename Off-Chain Display Name
+                  </h3>
+                  <span className="text-[10px] font-mono text-(--text-muted) px-2 py-0.5 rounded border border-(--border) bg-(--bg)">
+                    PostgreSQL Metadata
+                  </span>
+                </div>
+                <p className="text-xs text-(--text-muted)">
+                  Display names are stored off-chain in Postgres to preserve privacy. Admins (or the active identity owner) can rename identities anytime.
+                </p>
+                {lookupResult.did.toLowerCase().includes("0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266") ? (
+                  <div className="flex items-center gap-2.5 p-3 rounded-md bg-(--surface) border border-(--border) text-xs font-mono text-(--text-muted)">
+                    <span className="text-base">🔒</span>
+                    <div>
+                      <span className="font-semibold text-(--text-primary)">Root Admin (Account #0)</span>
+                      <p className="text-[11px] text-(--text-muted) mt-0.5">
+                        This is the genesis bootstrap deployer identity. Its name and credentials are cryptographically immutable and cannot be renamed.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleUpdateName} className="flex flex-col sm:flex-row gap-2">
+                    <Input
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="Enter new display name"
+                      required
+                      className="flex-1"
+                    />
+                    <Button type="submit" disabled={updateLoading || !editName.trim()}>
+                      {updateLoading ? (
+                        <>
+                          <Spinner /> Saving...
+                        </>
+                      ) : (
+                        "Save Name"
+                      )}
+                    </Button>
+                  </form>
+                )}
+                {updateError && <ErrorBox message={updateError} />}
+                {updateSuccess && <SuccessBox>{updateSuccess}</SuccessBox>}
+              </div>
+            )}
           </FadeIn>
         )}
         {!lookupResult && !lookupError && !lookupLoading && (

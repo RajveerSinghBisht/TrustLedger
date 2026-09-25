@@ -22,7 +22,7 @@ import {
 const classifications: Classification[] = ["PUBLIC", "INTERNAL", "CONFIDENTIAL"];
 
 export default function AssetsPage() {
-  const { token, did } = useAuth();
+  const { token, did, claims } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [ownerDID, setOwnerDID] = useState("");
@@ -93,6 +93,11 @@ export default function AssetsPage() {
       {!token && (
         <ErrorBox message="Not authenticated. Connect MetaMask and sign the challenge (top right) before uploading." />
       )}
+      {token && claims?.role !== "ADMIN" && (
+        <ErrorBox
+          message={`Your current session role is ${claims?.role}. Only ADMIN can register assets on-chain in AssetRegistry.sol. To upload documents, connect as ADMIN (Account #0). You can specify a Manager's DID as the Owner DID so they own the asset.`}
+        />
+      )}
 
       <Card>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -114,7 +119,7 @@ export default function AssetsPage() {
             <Input
               value={ownerDID}
               onChange={(e) => setOwnerDID(e.target.value)}
-              placeholder={did ?? "did:pramaan:0x..."}
+              placeholder={did ?? "did:trustledger:0x..."}
             />
           </Field>
 
@@ -131,7 +136,7 @@ export default function AssetsPage() {
             </Select>
           </Field>
 
-          <Button type="submit" disabled={submitting || !token}>
+          <Button type="submit" disabled={submitting || !token || claims?.role !== "ADMIN"}>
             {submitting ? (
               <>
                 <Spinner /> Uploading...

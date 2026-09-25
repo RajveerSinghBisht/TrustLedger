@@ -91,16 +91,16 @@ export default function PermissionsPage() {
             <Input
               value={assetId}
               onChange={(e) => setAssetId(e.target.value)}
-              placeholder="1042"
+              placeholder="1"
               type="number"
             />
           </Field>
 
-          <Field label="Subject DID" hint="The identity being granted or revoked access.">
+          <Field label="Subject DID" hint="The identity being granted or revoked access (e.g. did:trustledger:<wallet_address>).">
             <Input
               value={subjectDID}
               onChange={(e) => setSubjectDID(e.target.value)}
-              placeholder="did:pramaan:0xDef456..."
+              placeholder="did:trustledger:0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
             />
           </Field>
 

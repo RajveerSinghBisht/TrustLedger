@@ -72,11 +72,44 @@ function killProcess(child) {
   }
 }
 
+function killPort(port) {
+  try {
+    if (process.platform === "win32") {
+      const output = execSync("netstat -ano -p tcp", {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      });
+      const lines = output.trim().split(/\r?\n/);
+      const pids = new Set();
+      for (const line of lines) {
+        if (!line.includes("LISTENING")) continue;
+        const parts = line.trim().split(/\s+/);
+        if (parts[1] && (parts[1].endsWith(`:${port}`) || parts[1].endsWith(`]:${port}`))) {
+          const pid = parts[parts.length - 1];
+          if (pid && pid !== "0" && !isNaN(Number(pid))) {
+            pids.add(pid);
+          }
+        }
+      }
+      for (const pid of pids) {
+        try {
+          execSync(`taskkill /pid ${pid} /T /F`, { stdio: "ignore" });
+        } catch {}
+      }
+    } else {
+      execSync(`lsof -ti:${port} | xargs kill -9`, { stdio: "ignore" });
+    }
+  } catch {}
+}
+
 function cleanExit() {
   log("SYSTEM", C.sys, "Shutting down all PRAMAAN services...");
   for (const child of children) {
     killProcess(child);
   }
+  killPort(8545);
+  killPort(3000);
+  killPort(3001);
   process.exit(0);
 }
 
@@ -86,6 +119,9 @@ process.on("exit", () => {
   for (const child of children) {
     killProcess(child);
   }
+  killPort(8545);
+  killPort(3000);
+  killPort(3001);
 });
 
 function checkPort(port, host = "127.0.0.1") {
@@ -144,7 +180,14 @@ ${C.hardhat}${C.bold}  ======================================================
   ${C.dim}Backend: Port 3000 | Frontend: Port 3001 | EVM: Port 8545${C.reset}
 `);
 
-  // Step 0: Check Database (PostgreSQL 5432)
+  // Step 0: Clear any lingering background processes on ports 8545, 3000, 3001
+  log("SYSTEM", C.sys, "Clearing any lingering processes on ports 8545, 3000, 3001...");
+  killPort(8545);
+  killPort(3000);
+  killPort(3001);
+  await new Promise((r) => setTimeout(r, 600));
+
+  // Step 1: Check Database (PostgreSQL 5432)
   log("SYSTEM", C.sys, "Checking database connectivity (Port 5432)...");
   const dbRunning = await checkPort(5432);
   if (dbRunning) {
@@ -154,27 +197,21 @@ ${C.hardhat}${C.bold}  ======================================================
     log("SYSTEM", C.warn, "Ensure PostgreSQL or Docker is running ('docker compose up -d' in backend/).");
   }
 
-  // Step 1: Start or Connect to Hardhat Node (Port 8545)
-  log("HARDHAT", C.hardhat, "Checking local EVM blockchain (Port 8545)...");
-  const hardhatRunning = await checkPort(8545);
-  if (hardhatRunning) {
-    log("HARDHAT", C.hardhat, "Hardhat local node is already active on port 8545. Reusing.");
-  } else {
-    log("HARDHAT", C.hardhat, "Spawning 'npx hardhat node' in contracts/...");
-    const hardhatProc = spawn("npx", ["hardhat", "node"], {
-      cwd: DIRS.contracts,
-      shell: true,
-      detached: process.platform !== "win32",
-    });
-    children.push(hardhatProc);
-    pipeOutput(hardhatProc, "HARDHAT", C.hardhat);
+  // Step 2: Start Clean Hardhat Node (Port 8545)
+  log("HARDHAT", C.hardhat, "Spawning clean local EVM blockchain ('npx hardhat node') in contracts/...");
+  const hardhatProc = spawn("npx", ["hardhat", "node"], {
+    cwd: DIRS.contracts,
+    shell: true,
+    detached: process.platform !== "win32",
+  });
+  children.push(hardhatProc);
+  pipeOutput(hardhatProc, "HARDHAT", C.hardhat);
 
-    log("HARDHAT", C.hardhat, "Waiting for local blockchain RPC to initialize...");
-    await waitForPort(8545, 25000, "Hardhat Node");
-    log("HARDHAT", C.frontend, "Hardhat Node initialized on http://127.0.0.1:8545!");
-  }
+  log("HARDHAT", C.hardhat, "Waiting for local blockchain RPC to initialize...");
+  await waitForPort(8545, 25000, "Hardhat Node");
+  log("HARDHAT", C.frontend, "Hardhat Node initialized on http://127.0.0.1:8545!");
 
-  // Step 2: Deploy Smart Contracts
+  // Step 3: Deploy Smart Contracts
   log("DEPLOY", C.deploy, "Deploying smart contracts (IdentityRegistry, AccessControl, AssetRegistry)...");
   await new Promise((resolve, reject) => {
     const deployProc = spawn(
@@ -201,7 +238,27 @@ ${C.hardhat}${C.bold}  ======================================================
   // Delay for filesystem sync on .env
   await new Promise((r) => setTimeout(r, 600));
 
-  // Step 3: Spawn Backend (Port 3000)
+  // Step 4: Build Backend Engine TypeScript
+  log("BACKEND", C.backend, "Building PRAMAAN Backend Engine ('npm run build')...");
+  await new Promise((resolve, reject) => {
+    const buildProc = spawn("npm", ["run", "build"], {
+      cwd: DIRS.backend,
+      shell: true,
+    });
+    pipeOutput(buildProc, "BACKEND", C.backend);
+
+    buildProc.on("close", (code) => {
+      if (code === 0) {
+        log("BACKEND", C.frontend, "Backend build completed successfully.");
+        resolve();
+      } else {
+        log("BACKEND", C.err, `Backend build failed with exit code ${code}`);
+        reject(new Error(`Backend build failed with code ${code}`));
+      }
+    });
+  });
+
+  // Step 5: Spawn Backend Engine (Port 3000)
   log("BACKEND", C.backend, "Launching PRAMAAN Backend Engine on Port 3000 ('npm start')...");
   const backendProc = spawn("npm", ["start"], {
     cwd: DIRS.backend,
@@ -210,6 +267,12 @@ ${C.hardhat}${C.bold}  ======================================================
   });
   children.push(backendProc);
   pipeOutput(backendProc, "BACKEND", C.backend);
+
+  backendProc.on("exit", (code) => {
+    if (code !== 0 && code !== null) {
+      log("BACKEND", C.err, `Backend process exited with code ${code}`);
+    }
+  });
 
   // Wait for Backend to bind to port 3000 before starting Frontend
   log("BACKEND", C.backend, "Waiting for Backend to bind to http://localhost:3000...");
@@ -220,7 +283,7 @@ ${C.hardhat}${C.bold}  ======================================================
     log("BACKEND", C.warn, "Backend is taking longer to initialize; launching frontend...");
   }
 
-  // Step 4: Spawn Frontend explicitly on Port 3001
+  // Step 6: Spawn Frontend explicitly on Port 3001
   log("FRONTEND", C.frontend, "Launching Next.js Frontend on Port 3001 ('npm run dev')...");
   const frontendProc = spawn("npm", ["run", "dev"], {
     cwd: DIRS.frontend,
@@ -229,6 +292,19 @@ ${C.hardhat}${C.bold}  ======================================================
   });
   children.push(frontendProc);
   pipeOutput(frontendProc, "FRONTEND", C.frontend);
+
+  frontendProc.on("exit", (code) => {
+    if (code !== 0 && code !== null) {
+      log("FRONTEND", C.err, `Frontend process exited with code ${code}`);
+    }
+  });
+
+  try {
+    await waitForPort(3001, 25000, "Frontend UI");
+    log("FRONTEND", C.frontend, "Frontend ready on http://localhost:3001!");
+  } catch (e) {
+    log("FRONTEND", C.warn, "Frontend dev server initializing on http://localhost:3001...");
+  }
 
   log("SYSTEM", C.sys, "All PRAMAAN services running! Backend: :3000 | Frontend: :3001 | EVM: :8545");
   log("SYSTEM", C.sys, "Press Ctrl + C at any time to gracefully shut down the entire stack.");

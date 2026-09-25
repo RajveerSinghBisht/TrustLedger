@@ -5,8 +5,9 @@
   "description": "PRAMAAN backend API — auth, asset registration, proof bundles",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "dev": "node --watch -r ts-node/register src/index.ts",
     "build": "tsc",
+    "prestart": "npm run build",
     "start": "node dist/index.js",
     "test": "jest",
     "test:watch": "jest --watch",

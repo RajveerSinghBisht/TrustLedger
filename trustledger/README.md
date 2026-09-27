@@ -93,8 +93,7 @@ Every authorized asset download emits a self-contained cryptographic proof packa
   <img src="docs/diagrams/readme_system_flow.svg" width="100%" alt="PRAMAAN Core System Architecture & Execution Flow" />
 </p>
 
-<details>
-<summary><b>🔍 Click to expand Raw Protocol Sequence Definition</b></summary>
+<b>🔍 Click to expand Raw Protocol Sequence Definition</b>
 
 ```mermaid
 sequenceDiagram
@@ -126,7 +125,7 @@ sequenceDiagram
     API-->>UI: Stream Decrypted Asset + X-Proof-Bundle Header
     UI-->>User: Download Document & Proof Certificate
 ```
-</details>
+
 
 ---
 

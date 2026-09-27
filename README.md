@@ -54,7 +54,7 @@ Every identity is an on-chain Decentralized Identifier (**DID**). Every sensitiv
 
 ## 🎯 Problem Statement Context (BEL)
 
-In long-lifecycle defence systems (such as radar arrays, avionics, and naval communication systems manufactured by **Bharat Electronics Limited**) operating across 20–30 year service spans:
+In long-lifecycle defence systems (such as radar arrays, avionics, and naval communication systems manufactured by **Bharat Electronics Limited**) operating across decades of service spans:
 
 1. **The Legacy Vulnerability**: Traditional Role-Based Access Control (RBAC) relies on mutable centralized relational databases. A rogue database administrator or compromised service account can alter access records or forge authorizations retrospectively without leaving a tamper-evident trace.
 2. **The Temporal Audit Problem**: Traditional systems only know *current* permissions. If an engineer legitimately accessed classified documentation in 2024, but had their clearance revoked in 2026, standard RBAC answers: *"Access denied."* It cannot mathematically prove whether the 2024 access was lawful under the exact rules active at that precise timestamp.
@@ -89,6 +89,16 @@ Every authorized asset download emits a self-contained cryptographic proof packa
 
 ## 🔄 System Architecture & Flow
 
+> [!TIP]
+> **Detailed Interactive Guide & Vector Diagrams**: For complete multi-tier architectural blueprints, dynamic RBAC timeline flows, envelope encryption sequences, and live CLI inspection tools, see [trustledger/docs/ARCHITECTURE_AND_FLOW.md](trustledger/docs/ARCHITECTURE_AND_FLOW.md).
+
+<p align="center">
+  <img src="trustledger/docs/diagrams/readme_system_flow.svg" width="100%" alt="PRAMAAN Core System Architecture & Execution Flow" />
+</p>
+
+<details>
+<summary><b>🔍 Click to expand Raw Protocol Sequence Definition</b></summary>
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -119,6 +129,7 @@ sequenceDiagram
     API-->>UI: Stream Decrypted Asset + X-Proof-Bundle Header
     UI-->>User: Download Document & Proof Certificate
 ```
+</details>
 
 ---
 
@@ -278,7 +289,10 @@ TrustLedger/
     │   ├── public/              # High-res PRAMAAN logo, icon, and favicon assets
     │   └── lib/                 # AuthContext, ThemeContext, API client
     │
-    └── docs/                    # Technical specifications (Contracts, Backend, Data Model)
+    └── docs/                    # Technical specifications
+        ├── ARCHITECTURE_AND_FLOW.md  # Unified architecture & flow guide (high-level & deep-dive)
+        ├── diagrams/            # High-resolution vector SVG diagrams
+        └── PRAMAAN_Project_Documentation.md # Master SIH hackathon proposal & report
 ```
 
 ---

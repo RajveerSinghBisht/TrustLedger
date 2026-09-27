@@ -77,7 +77,7 @@ MVP requirement, not an optional hardening step.
 
 ```
 POST /api/auth/challenge
-  Request:  { "did": "did:trustledger:0xABC..." }
+  Request:  { "did": "did:trustledger:<USER_ADDRESS>" }
   Response: { "message": "<canonical signable text>", "expiresAt": "<ISO timestamp>" }
 ```
 
@@ -111,7 +111,7 @@ TrustLedger Authentication Request
 
 Domain: <configured app domain, e.g. trustledger.local>
 Purpose: Authenticate to TrustLedger backend
-DID: did:trustledger:0xABC...
+DID: did:trustledger:<USER_ADDRESS>
 Nonce: <128-bit+ cryptographically random value>
 Issued At: <ISO-8601 timestamp>
 Expiration: <ISO-8601 timestamp>
@@ -125,7 +125,7 @@ application that happens to construct similarly-shaped signable text.
 
 ```
 POST /api/auth/verify
-  Request:  { "did": "...", "message": "<the exact text that was signed>", "signature": "0x..." }
+  Request:  { "did": "<USER_DID>", "message": "<the exact text that was signed>", "signature": "<ECDSA_SIGNATURE>" }
   Response: { "token": "<JWT>", "expiresAt": "<ISO timestamp>" }
 ```
 
@@ -349,9 +349,9 @@ calls early with 401 rather than let every request reach the chain.
 Request:
 ```json
 {
-  "identityAddress": "0xAbC123...",
-  "did": "did:trustledger:0xAbC123...",
-  "publicKey": "0x04a91...",
+  "identityAddress": "<USER_ETHEREUM_ADDRESS>",
+  "did": "did:trustledger:<USER_ETHEREUM_ADDRESS>",
+  "publicKey": "<COMPRESSED_PUBLIC_KEY>",
   "role": "MANAGER",
   "displayName": "Officer A"
 }
@@ -360,10 +360,10 @@ Request:
 Response (201):
 ```json
 {
-  "did": "did:trustledger:0xAbC123...",
+  "did": "did:trustledger:<USER_ETHEREUM_ADDRESS>",
   "role": "MANAGER",
   "status": "ACTIVE",
-  "txHash": "0x9e1b..."
+  "txHash": "<ON_CHAIN_TRANSACTION_HASH>"
 }
 ```
 
@@ -383,7 +383,7 @@ hash and a metadataURI pointing back to the Postgres row.
 Request: `multipart/form-data`
 ```
 file: <the actual document>
-ownerDID: "did:trustledger:0xAbC123..."
+ownerDID: "did:trustledger:<USER_ADDRESS>"
 classification: "CONFIDENTIAL"
 ```
 
@@ -424,9 +424,9 @@ Response (201):
 ```json
 {
   "assetId": 1042,
-  "assetHash": "0x7f8a...",
-  "metadataURI": "local://records/a1b2c3...",
-  "txHash": "0x9e1b..."
+  "assetHash": "<SHA256_ASSET_CONTENT_HASH>",
+  "metadataURI": "local://records/<RECORD_UUID>",
+  "txHash": "<ON_CHAIN_TRANSACTION_HASH>"
 }
 ```
 
@@ -461,7 +461,7 @@ Request:
 ```json
 {
   "assetId": 1042,
-  "subjectDID": "did:trustledger:0xDef456...",
+  "subjectDID": "did:trustledger:<SUBJECT_ADDRESS>",
   "action": "READ",
   "state": "GRANTED"
 }
@@ -472,7 +472,7 @@ Response (201):
 {
   "permissionId": 87,
   "validFrom": 1735660800,
-  "txHash": "0x9e1b..."
+  "txHash": "<ON_CHAIN_TRANSACTION_HASH>"
 }
 ```
 
@@ -484,13 +484,13 @@ authenticated in this MVP — this is explicitly meant to be a public
 verifiability feature (an auditor or outside party checking a historical
 claim), not a protected action.
 
-Query params: `?assetId=1042&subjectDID=did:trustledger:0xDef456...&action=READ&atTimestamp=1735664520`
+Query params: `?assetId=1042&subjectDID=did:trustledger:<SUBJECT_ADDRESS>&action=READ&atTimestamp=1735664520`
 
 Response (200):
 ```json
 {
   "assetId": 1042,
-  "subjectDID": "did:trustledger:0xDef456...",
+  "subjectDID": "did:trustledger:<SUBJECT_ADDRESS>",
   "action": "READ",
   "atTimestamp": 1735664520,
   "wasLegitimate": true,

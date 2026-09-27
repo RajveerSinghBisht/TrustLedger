@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 800" width="100%" height="100%">
+  <defs>
+    <linearGradient id="readmeBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090e1a"/>
+      <stop offset="100%" stop-color="#050811"/>
+    </linearGradient>
+    <marker id="readmeArrowCyan" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+      <path d="M 0 0 L 7 3.5 L 0 7 z" fill="#06b6d4"/>
+    </marker>
+    <marker id="readmeArrowGreen" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+      <path d="M 0 0 L 7 3.5 L 0 7 z" fill="#10b981"/>
+    </marker>
+    <marker id="readmeArrowPurple" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+      <path d="M 0 0 L 7 3.5 L 0 7 z" fill="#8b5cf6"/>
+    </marker>
+    <marker id="readmeArrowAmber" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+      <path d="M 0 0 L 7 3.5 L 0 7 z" fill="#f59e0b"/>
+    </marker>
+  </defs>
+
+  <rect width="1100" height="800" fill="url(#readmeBgGrad)"/>
+
+  <!-- Title Banner -->
+  <rect x="40" y="16" width="1020" height="50" rx="8" fill="#111827" stroke="#1f2937" stroke-width="1"/>
+  <circle cx="68" cy="41" r="8" fill="#06b6d4"/>
+  <text x="88" y="46" fill="#f8fafc" font-family="system-ui, sans-serif" font-size="16" font-weight="700">PRAMAAN — Core System Architecture &amp; Execution Flow</text>
+  <rect x="880" y="28" width="160" height="26" rx="13" fill="#0c4a6e"/>
+  <text x="960" y="45" fill="#7dd3fc" font-family="system-ui, sans-serif" font-size="11" font-weight="600" text-anchor="middle">BEL // SIH 26125</text>
+
+  <!-- Lifeline Columns (5 Participants) -->
+  <!-- 1. User -->
+  <g transform="translate(60, 80)">
+    <rect width="140" height="38" rx="6" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="70" y="24" fill="#60a5fa" font-family="system-ui, sans-serif" font-size="11" font-weight="700" text-anchor="middle">Subject (Engineer)</text>
+    <line x1="70" y1="38" x2="70" y2="700" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 4"/>
+  </g>
+
+  <!-- 2. UI -->
+  <g transform="translate(260, 80)">
+    <rect width="150" height="38" rx="6" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="75" y="24" fill="#38bdf8" font-family="system-ui, sans-serif" font-size="11" font-weight="700" text-anchor="middle">PRAMAAN UI (:3001)</text>
+    <line x1="75" y1="38" x2="75" y2="700" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 4"/>
+  </g>
+
+  <!-- 3. API -->
+  <g transform="translate(480, 80)">
+    <rect width="150" height="38" rx="6" fill="#1e293b" stroke="#10b981" stroke-width="1.5"/>
+    <text x="75" y="24" fill="#34d399" font-family="system-ui, sans-serif" font-size="11" font-weight="700" text-anchor="middle">Backend API (:3000)</text>
+    <line x1="75" y1="38" x2="75" y2="700" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 4"/>
+  </g>
+
+  <!-- 4. DB -->
+  <g transform="translate(690, 80)">
+    <rect width="150" height="38" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+    <text x="75" y="24" fill="#fbbf24" font-family="system-ui, sans-serif" font-size="11" font-weight="700" text-anchor="middle">PostgreSQL (:5432)</text>
+    <line x1="75" y1="38" x2="75" y2="700" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 4"/>
+  </g>
+
+  <!-- 5. EVM -->
+  <g transform="translate(900, 80)">
+    <rect width="150" height="38" rx="6" fill="#1e293b" stroke="#8b5cf6" stroke-width="1.5"/>
+    <text x="75" y="24" fill="#c084fc" font-family="system-ui, sans-serif" font-size="11" font-weight="700" text-anchor="middle">Consortium EVM (:8545)</text>
+    <line x1="75" y1="38" x2="75" y2="700" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 4"/>
+  </g>
+
+  <!-- PHASE 1 DIVIDER BANNER -->
+  <rect x="70" y="140" width="970" height="26" rx="4" fill="#082f49" stroke="#0284c7" stroke-width="1"/>
+  <text x="555" y="157" fill="#bae6fd" font-family="system-ui, sans-serif" font-size="11" font-weight="700" text-anchor="middle">PHASE 1: CRYPTOGRAPHIC CHALLENGE-RESPONSE AUTHENTICATION (EIP-191 / EIP-712)</text>
+
+  <!-- 1.1 Connect Wallet -->
+  <path d="M 130 185 L 330 185" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#readmeArrowCyan)"/>
+  <rect x="160" y="172" width="140" height="18" rx="3" fill="#0c4a6e"/>
+  <text x="230" y="184" fill="#e0f2fe" font-family="system-ui, sans-serif" font-size="9" text-anchor="middle">1. Connect Web3 Wallet</text>
+
+  <!-- 1.2 Request Nonce -->
+  <path d="M 335 210 L 550 210" stroke="#10b981" stroke-width="1.5" marker-end="url(#readmeArrowGreen)"/>
+  <rect x="375" y="198" width="130" height="18" rx="3" fill="#064e3b"/>
+  <text x="440" y="210" fill="#a7f3d0" font-family="system-ui, sans-serif" font-size="9" text-anchor="middle">2. Request Nonce Challenge</text>
+
+  <!-- 1.3 Return Nonce -->
+  <path d="M 550 235 L 340 235" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#readmeArrowGreen)"/>
+  <rect x="370" y="223" width="145" height="18" rx="3" fill="#064e3b"/>
+  <text x="442" y="235" fill="#a7f3d0" font-family="system-ui, sans-serif" font-size="9" text-anchor="middle">3. Nonce + Structured Text</text>
+
+  <!-- 1.4 User Signs -->
+  <path d="M 130 260 L 330 260" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#readmeArrowCyan)"/>
+  <rect x="155" y="248" width="150" height="18" rx="3" fill="#0c4a6e"/>
+  <text x="230" y="260" fill="#e0f2fe" font-family="system-ui, sans-serif" font-size="9" text-anchor="middle">4. Sign via Private Key (ECDSA)</text>
+
+  <!-- 1.5 Verify Submit -->
+  <path d="M 335 285 L 550 285" stroke="#10b981" stroke-width="1.5" marker-end="url(#readmeArrowGreen)"/>
+  <rect x="365" y="273" width="155" height="18" rx="3" fill="#064e3b"/>
+  <text x="442" y="285" fill="#a7f3d0" font-family="system-ui, sans-serif" font-size="9" text-anchor="middle">5. POST /verify (Signature + DID)</text>
+
+  <!-- 1.6 On-chain DID check -->
+  <path d="M 555 310 L 970 310" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#readmeArrowPurple)"/>
+  <rect x="680" y="298" width="180" height="18" rx="3" fill="#2e1065"/>
+  <text x="770" y="310" fill="#ddd6fe" font-family="monospace" font-size="9" text-anchor="middle">6. IdentityRegistry.isActive(addr)</text>
+
+  <!-- 1.7 Return JWT -->
+  <path d="M 550 335 L 340 335" stroke="#10b981" stroke-width="1.5" marker-end="url(#readmeArrowGreen)"/>
+  <rect x="370" y="323" width="145" height="18" rx="3" fill="#064e3b"/>
+  <text x="442" y="335" fill="#a7f3d0" font-family="system-ui, sans-serif" font-size="9" text-anchor="middle">7. Issue 15-Min Ephemeral JWT</text>
+
+  <!-- PHASE 2 DIVIDER BANNER -->
+  <rect x="70" y="375" width="970" height="26" rx="4" fill="#064e3b" stroke="#059669" stroke-width="1"/>
+  <text x="555" y="392" fill="#a7f3d0" font-family="system-ui, sans-serif" font-size="11" font-weight="700" text-anchor="middle">PHASE 2: VERIFIED ASSET DOWNLOAD &amp; POLICY-AT-THE-TIME AUDIT ANCHORING</text>
+
+  <!-- 2.1 Request download -->
+  <path d="M 130 420 L 330 420" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#readmeArrowCyan)"/>
+  <rect x="155" y="408" width="150" height="18" rx="3" fill="#0c4a6e"/>
+  <text x="230" y="420" fill="#e0f2fe" font-family="system-ui, sans-serif" font-size="9" text-anchor="middle">8. Download Asset #1042</text>
+
+  <!-- 2.2 GET Download with JWT -->
+  <path d="M 335 445 L 550 445" stroke="#10b981" stroke-width="1.5" marker-end="url(#readmeArrowGreen)"/>
+  <rect x="365" y="433" width="155" height="18" rx="3" fill="#064e3b"/>
+  <text x="442" y="445" fill="#a7f3d0" font-family="monospace" font-size="9" text-anchor="middle">9. GET /download (Bearer JWT)</text>
+
+  <!-- 2.3 Check Policy on-chain -->
+  <path d="M 555 470 L 970 470" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#readmeArrowPurple)"/>
+  <rect x="670" y="458" width="195" height="18" rx="3" fill="#2e1065"/>
+  <text x="767" y="470" fill="#ddd6fe" font-family="monospace" font-size="9" text-anchor="middle">10. AccessControl.checkPermissionNow()</text>
+
+  <!-- 2.4 Policy Confirmed -->
+  <path d="M 970 495 L 560 495" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#readmeArrowPurple)"/>
+  <rect x="690" y="483" width="160" height="18" rx="3" fill="#2e1065"/>
+  <text x="770" y="495" fill="#ddd6fe" font-family="system-ui, sans-serif" font-size="9" text-anchor="middle">11. Policy Active (Version #87)</text>
+
+  <!-- 2.5 Log on-chain access -->
+  <path d="M 555 520 L 970 520" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#readmeArrowPurple)"/>
+  <rect x="680" y="508" width="180" height="18" rx="3" fill="#2e1065"/>
+  <text x="770" y="520" fill="#ddd6fe" font-family="monospace" font-size="9" text-anchor="middle">12. recordAccess() -&gt; AssetAccessed</text>
+
+  <!-- 2.6 Fetch ciphertext from DB -->
+  <path d="M 555 548 L 760 548" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#readmeArrowAmber)"/>
+  <rect x="585" y="536" width="145" height="18" rx="3" fill="#451a03"/>
+  <text x="657" y="548" fill="#fde68a" font-family="system-ui, sans-serif" font-size="9" text-anchor="middle">13. Fetch Encrypted Payload</text>
+
+  <!-- 2.7 Decrypt & Sign Proof (Internal API Box) -->
+  <rect x="500" y="575" width="115" height="42" rx="4" fill="#064e3b" stroke="#059669" stroke-width="1"/>
+  <text x="557" y="592" fill="#a7f3d0" font-family="system-ui, sans-serif" font-size="9" font-weight="700" text-anchor="middle">14. AES-256 Decrypt</text>
+  <text x="557" y="608" fill="#a7f3d0" font-family="system-ui, sans-serif" font-size="9" font-weight="700" text-anchor="middle">+ Sign Proof Bundle</text>
+
+  <!-- 2.8 Stream file + header -->
+  <path d="M 550 635 L 340 635" stroke="#10b981" stroke-width="1.5" marker-end="url(#readmeArrowGreen)"/>
+  <rect x="360" y="623" width="165" height="18" rx="3" fill="#064e3b"/>
+  <text x="442" y="635" fill="#a7f3d0" font-family="system-ui, sans-serif" font-size="9" text-anchor="middle">15. File Bytes + X-Proof-Bundle</text>
+
+  <!-- 2.9 UI Download -->
+  <path d="M 330 660 L 135 660" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#readmeArrowCyan)"/>
+  <rect x="150" y="648" width="165" height="18" rx="3" fill="#0c4a6e"/>
+  <text x="232" y="660" fill="#e0f2fe" font-family="system-ui, sans-serif" font-size="9" text-anchor="middle">16. Download File + Proof (.json)</text>
+
+  <!-- Footer summary -->
+  <rect x="40" y="730" width="1020" height="45" rx="6" fill="#111827" stroke="#1f2937" stroke-width="1"/>
+  <text x="550" y="750" fill="#ffffff" font-family="system-ui, sans-serif" font-size="11" font-weight="700" text-anchor="middle">Guaranteed Zero-Trust Audit Trail: Every download generates an independent cryptographic proof verifiable by any third party.</text>
+  <text x="550" y="766" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="10" text-anchor="middle">On-Chain Truth (Solidity) &bull; Off-Chain Confidentiality (AES-256-GCM) &bull; Standalone Verification (/verify)</text>
+</svg>

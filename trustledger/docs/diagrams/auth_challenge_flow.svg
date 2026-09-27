@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 680" width="100%" height="100%">
+  <defs>
+    <linearGradient id="authBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090e1a"/>
+      <stop offset="100%" stop-color="#050811"/>
+    </linearGradient>
+    <linearGradient id="cardGradAuth" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <marker id="arrowAuthCyan" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#06b6d4"/>
+    </marker>
+    <marker id="arrowAuthGreen" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#10b981"/>
+    </marker>
+    <marker id="arrowAuthOrange" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#f59e0b"/>
+    </marker>
+  </defs>
+
+  <rect width="1100" height="680" fill="url(#authBgGrad)"/>
+
+  <!-- Title Banner -->
+  <rect x="40" y="20" width="1020" height="54" rx="8" fill="#111827" stroke="#1f2937" stroke-width="1"/>
+  <circle cx="68" cy="47" r="10" fill="#f59e0b" opacity="0.2"/>
+  <circle cx="68" cy="47" r="5" fill="#f59e0b"/>
+  <text x="90" y="52" fill="#f8fafc" font-family="system-ui, sans-serif" font-size="16" font-weight="700">Flow 1: Cryptographic Challenge-Response Authentication (EIP-191/712)</text>
+  <rect x="880" y="34" width="160" height="26" rx="13" fill="#78350f"/>
+  <text x="960" y="51" fill="#fde68a" font-family="system-ui, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Zero-Password Auth</text>
+
+  <!-- Left: Step 1 Challenge Issuance -->
+  <g transform="translate(40, 95)">
+    <rect width="480" height="550" rx="8" fill="url(#cardGradAuth)" stroke="#38bdf8" stroke-width="1.5"/>
+    <rect x="16" y="16" width="70" height="20" rx="3" fill="#0284c7"/><text x="51" y="30" fill="#ffffff" font-family="system-ui, sans-serif" font-size="10" font-weight="700" text-anchor="middle">PHASE 1</text>
+    <text x="96" y="32" fill="#38bdf8" font-family="system-ui, sans-serif" font-size="14" font-weight="700">Nonce Challenge Request &amp; Generation</text>
+
+    <!-- Substep 1 -->
+    <text x="16" y="66" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">1. Connect Wallet &amp; Derive DID:</text>
+    <rect x="16" y="78" width="448" height="55" rx="4" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <g font-family="monospace" font-size="11" fill="#cbd5e1">
+      <text x="28" y="100">Address: &lt;USER_ETHEREUM_ADDRESS&gt;</text>
+      <text x="28" y="120" fill="#38bdf8">Derived DID: did:trustledger:&lt;USER_ADDRESS&gt;</text>
+    </g>
+
+    <!-- Substep 2: Challenge request -->
+    <text x="16" y="156" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">2. Client Requests Nonce Challenge:</text>
+    <rect x="16" y="168" width="448" height="40" rx="4" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="28" y="193" fill="#bae6fd" font-family="monospace" font-size="11">POST /api/auth/challenge { did: "did:trustledger:&lt;USER_ADDRESS&gt;" }</text>
+
+    <!-- Substep 3: On-Chain & DB operations -->
+    <text x="16" y="232" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">3. Server Verification &amp; Challenge Store:</text>
+    <rect x="16" y="244" width="448" height="150" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <g font-family="monospace" font-size="11">
+      <text x="28" y="268" fill="#a78bfa">IdentityRegistry.resolveDID(did) -&gt; expectedAddress</text>
+      <text x="28" y="292" fill="#94a3b8">• If address == address(0) -&gt; <tspan fill="#f87171">404 ("DID not registered")</tspan></text>
+      <text x="28" y="316" fill="#fbbf24">• Nonce = crypto.randomBytes(16).toString('hex')</text>
+      <text x="28" y="340" fill="#94a3b8">• INSERT INTO <tspan fill="#38bdf8">auth_challenges</tspan> (nonce, did, address,</text>
+      <text x="48" y="360" fill="#94a3b8">consumed=false, expiresAt=now+5min)</text>
+      <text x="28" y="382" fill="#34d399">✓ Returns 200 OK { message, nonce, expiresAt }</text>
+    </g>
+
+    <!-- Substep 4: MetaMask Sign -->
+    <text x="16" y="418" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">4. Client Cryptographic Signature:</text>
+    <rect x="16" y="430" width="448" height="96" rx="6" fill="#141e2e" stroke="#1e3a5f" stroke-width="1"/>
+    <text x="28" y="455" fill="#f59e0b" font-family="system-ui, sans-serif" font-size="11" font-weight="700">MetaMask Prompt (personal_sign):</text>
+    <text x="28" y="475" fill="#cbd5e1" font-family="system-ui, sans-serif" font-size="10">User signs the canonical domain-separated text with private key.</text>
+    <text x="28" y="495" fill="#93c5fd" font-family="monospace" font-size="10">Produces 65-byte ECDSA Signature (r, s, v)</text>
+    <text x="28" y="513" fill="#64748b" font-family="system-ui, sans-serif" font-size="9">(Zero exposure of private keys)</text>
+  </g>
+
+  <!-- Arrow between Phase 1 and Phase 2 -->
+  <path d="M 520 370 L 552 370" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#arrowAuthOrange)"/>
+
+  <!-- Right: Step 2 Verification & JWT -->
+  <g transform="translate(560, 95)">
+    <rect width="500" height="550" rx="8" fill="url(#cardGradAuth)" stroke="#10b981" stroke-width="1.5"/>
+    <rect x="16" y="16" width="70" height="20" rx="3" fill="#059669"/><text x="51" y="30" fill="#ffffff" font-family="system-ui, sans-serif" font-size="10" font-weight="700" text-anchor="middle">PHASE 2</text>
+    <text x="96" y="32" fill="#34d399" font-family="system-ui, sans-serif" font-size="14" font-weight="700">ECDSA Verification &amp; Session Token</text>
+
+    <!-- Substep 5: Verify POST -->
+    <text x="16" y="66" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">5. Submit Signed Payload:</text>
+    <rect x="16" y="78" width="468" height="40" rx="4" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="28" y="103" fill="#bae6fd" font-family="monospace" font-size="11">POST /api/auth/verify { did, message, signature }</text>
+
+    <!-- Substep 6: Server verification pipeline -->
+    <text x="16" y="142" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">6. Strict Backend Verification Pipeline:</text>
+    <rect x="16" y="154" width="468" height="230" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <g font-family="monospace" font-size="11">
+      <text x="28" y="178" fill="#38bdf8">1. Anti-Replay Nonce Check:</text>
+      <text x="48" y="198" fill="#94a3b8">Lookup challenge: must exist, NOT expired, consumed==false</text>
+
+      <text x="28" y="224" fill="#38bdf8">2. Message Integrity Check:</text>
+      <text x="48" y="244" fill="#94a3b8">Server reconstructs canonical text; byte-for-byte comparison</text>
+
+      <text x="28" y="270" fill="#38bdf8">3. Elliptic Curve Address Recovery:</text>
+      <text x="48" y="290" fill="#fbbf24">recovered = ethers.verifyMessage(message, signature)</text>
+      <text x="48" y="310" fill="#94a3b8">Assert: <tspan fill="#34d399">recovered.toLowerCase() == expectedAddress</tspan></text>
+
+      <text x="28" y="336" fill="#38bdf8">4. Real-Time On-Chain Status Check:</text>
+      <text x="48" y="356" fill="#a78bfa">IdentityRegistry.isActive(expectedAddress) == true</text>
+      <text x="48" y="374" fill="#94a3b8">Revoked users rejected immediately (403 Forbidden)</text>
+    </g>
+
+    <!-- Substep 7: Ephemeral JWT -->
+    <text x="16" y="408" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">7. Mark Consumed &amp; Issue Ephemeral JWT:</text>
+    <rect x="16" y="420" width="468" height="110" rx="6" fill="#064e3b" stroke="#059669" stroke-width="1"/>
+    <g font-family="monospace" font-size="10" fill="#cbd5e1">
+      <text x="28" y="442" fill="#6ee7b7">✓ UPDATE auth_challenges SET consumed = true (Zero Replay)</text>
+      <text x="28" y="462">Token Claims: { did, address, role, iat, exp: now + 15m }</text>
+      <text x="28" y="482">Signed with BACKEND_SIGNING_PRIVATE_KEY (HMAC-SHA256)</text>
+      <text x="28" y="504" fill="#a7f3d0" font-weight="700">Client saves token in React In-Memory State (Never localStorage)</text>
+    </g>
+  </g>
+</svg>

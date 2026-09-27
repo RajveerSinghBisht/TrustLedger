@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="minBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0f1d"/>
+      <stop offset="100%" stop-color="#060912"/>
+    </linearGradient>
+    <linearGradient id="cardGradMin" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <marker id="minArrowCyan" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#06b6d4"/>
+    </marker>
+    <marker id="minArrowGreen" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#10b981"/>
+    </marker>
+    <marker id="minArrowPurple" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#8b5cf6"/>
+    </marker>
+  </defs>
+
+  <rect width="1100" height="600" fill="url(#minBgGrad)"/>
+
+  <!-- Grid overlay -->
+  <g opacity="0.04" stroke="#ffffff" stroke-width="1">
+    <pattern id="minGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" />
+    </pattern>
+    <rect width="1100" height="600" fill="url(#minGrid)" />
+  </g>
+
+  <!-- Title Banner -->
+  <rect x="40" y="24" width="1020" height="54" rx="8" fill="#111827" stroke="#1f2937" stroke-width="1"/>
+  <circle cx="68" cy="51" r="10" fill="#06b6d4" opacity="0.2"/>
+  <circle cx="68" cy="51" r="5" fill="#06b6d4"/>
+  <text x="90" y="56" fill="#f8fafc" font-family="system-ui, sans-serif" font-size="16" font-weight="700">1.1 Minimal System Architecture Overview (High-Level)</text>
+  <rect x="880" y="38" width="160" height="26" rx="13" fill="#0c4a6e"/>
+  <text x="960" y="55" fill="#7dd3fc" font-family="system-ui, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Four Core Layers</text>
+
+  <!-- 4 Layer Columns / Cards -->
+  <!-- Layer 1: Client Layer -->
+  <g transform="translate(40, 105)">
+    <rect width="230" height="450" rx="10" fill="url(#cardGradMin)" stroke="#0284c7" stroke-width="1.5"/>
+    <rect x="16" y="16" width="198" height="28" rx="4" fill="#0284c7"/>
+    <text x="115" y="35" fill="#ffffff" font-family="system-ui, sans-serif" font-size="11" font-weight="700" text-anchor="middle">1. CLIENT LAYER (:3001)</text>
+
+    <!-- Sub-elements -->
+    <rect x="16" y="60" width="198" height="85" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="30" y="85" fill="#38bdf8" font-family="system-ui, sans-serif" font-size="12" font-weight="700">User Subjects</text>
+    <text x="30" y="105" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Admins / Officers</text>
+    <text x="30" y="125" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Engineers / Auditors</text>
+
+    <rect x="16" y="160" width="198" height="95" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="30" y="185" fill="#38bdf8" font-family="system-ui, sans-serif" font-size="12" font-weight="700">MetaMask Wallet</text>
+    <text x="30" y="205" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• secp256k1 Keypair</text>
+    <text x="30" y="225" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• EIP-191 Nonce Signer</text>
+    <text x="30" y="245" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• DID Derivation</text>
+
+    <rect x="16" y="270" width="198" height="150" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="30" y="295" fill="#38bdf8" font-family="system-ui, sans-serif" font-size="12" font-weight="700">PRAMAAN Web dApp</text>
+    <text x="30" y="318" fill="#cbd5e1" font-family="system-ui, monospace" font-size="10">Next.js 16 / React 19</text>
+    <text x="30" y="340" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• In-Memory JWT Auth</text>
+    <text x="30" y="362" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Asset Upload &amp; Catalog</text>
+    <text x="30" y="384" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Policy-at-Time Auditor</text>
+    <text x="30" y="406" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Standalone Verifier</text>
+  </g>
+
+  <!-- Arrow: Client to Backend -->
+  <path d="M 270 330 L 305 330" stroke="#06b6d4" stroke-width="2.5" marker-end="url(#minArrowCyan)"/>
+  <rect x="250" y="300" width="60" height="18" rx="3" fill="#0c4a6e"/>
+  <text x="280" y="313" fill="#e0f2fe" font-family="system-ui, sans-serif" font-size="9" font-weight="600" text-anchor="middle">HTTPS</text>
+
+  <!-- Layer 2: API & Orchestration Layer -->
+  <g transform="translate(315, 105)">
+    <rect width="240" height="450" rx="10" fill="url(#cardGradMin)" stroke="#10b981" stroke-width="1.5"/>
+    <rect x="16" y="16" width="208" height="28" rx="4" fill="#059669"/>
+    <text x="120" y="35" fill="#ffffff" font-family="system-ui, sans-serif" font-size="11" font-weight="700" text-anchor="middle">2. BACKEND API (:3000)</text>
+
+    <!-- Sub-elements -->
+    <rect x="16" y="60" width="208" height="85" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="30" y="85" fill="#34d399" font-family="system-ui, sans-serif" font-size="12" font-weight="700">Security Gateways</text>
+    <text x="30" y="105" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Helmet Security Headers</text>
+    <text x="30" y="125" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Tiered IP Rate Limiters</text>
+    <text x="30" y="140" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Zod Schema Validation</text>
+
+    <rect x="16" y="160" width="208" height="95" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="30" y="185" fill="#34d399" font-family="system-ui, sans-serif" font-size="12" font-weight="700">Core Engines</text>
+    <text x="30" y="205" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• EIP-191 Nonce Challenge</text>
+    <text x="30" y="225" fill="#fbbf24" font-family="system-ui, sans-serif" font-size="11">• AES-256-GCM Envelope</text>
+    <text x="30" y="245" fill="#a78bfa" font-family="system-ui, sans-serif" font-size="11">• Proof Bundle Signer</text>
+
+    <rect x="16" y="270" width="208" height="150" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="30" y="295" fill="#34d399" font-family="system-ui, sans-serif" font-size="12" font-weight="700">Relayer &amp; Adapters</text>
+    <text x="30" y="318" fill="#cbd5e1" font-family="system-ui, monospace" font-size="10">ethers.js v6 Relayer</text>
+    <text x="30" y="340" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Fresh On-Chain Checks</text>
+    <text x="30" y="362" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Submits Mints &amp; Grants</text>
+    <text x="30" y="384" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Logs Access Events</text>
+    <text x="30" y="406" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Prisma ORM Adapters</text>
+  </g>
+
+  <!-- Connectors from Backend: to Storage (down-right) and to Blockchain (straight right) -->
+  <path d="M 555 240 L 595 240" stroke="#10b981" stroke-width="2.5" marker-end="url(#minArrowGreen)"/>
+  <rect x="545" y="215" width="60" height="18" rx="3" fill="#064e3b"/>
+  <text x="575" y="228" fill="#a7f3d0" font-family="system-ui, sans-serif" font-size="9" font-weight="600" text-anchor="middle">Prisma</text>
+
+  <path d="M 555 410 L 830 410" stroke="#8b5cf6" stroke-width="2.5" marker-end="url(#minArrowPurple)"/>
+  <rect x="660" y="390" width="80" height="18" rx="3" fill="#2e1065"/>
+  <text x="700" y="403" fill="#ddd6fe" font-family="system-ui, sans-serif" font-size="9" font-weight="600" text-anchor="middle">JSON-RPC</text>
+
+  <!-- Layer 3: Persistence Layer (Top Right) -->
+  <g transform="translate(605, 105)">
+    <rect width="210" height="230" rx="10" fill="url(#cardGradMin)" stroke="#38bdf8" stroke-width="1.5"/>
+    <rect x="14" y="16" width="182" height="28" rx="4" fill="#0284c7"/>
+    <text x="105" y="35" fill="#ffffff" font-family="system-ui, sans-serif" font-size="11" font-weight="700" text-anchor="middle">3. PERSISTENCE (:5432)</text>
+
+    <text x="16" y="66" fill="#38bdf8" font-family="system-ui, sans-serif" font-size="11" font-weight="700">PostgreSQL 16 Tables:</text>
+    
+    <rect x="14" y="76" width="182" height="34" rx="4" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="24" y="98" fill="#e2e8f0" font-family="monospace" font-size="10">users (did, PII, email)</text>
+
+    <rect x="14" y="116" width="182" height="34" rx="4" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="24" y="138" fill="#fbbf24" font-family="monospace" font-size="10">encrypted_records</text>
+
+    <rect x="14" y="156" width="182" height="34" rx="4" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="24" y="178" fill="#e2e8f0" font-family="monospace" font-size="10">audit_log (tx mirror)</text>
+
+    <rect x="14" y="196" width="182" height="30" rx="4" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="24" y="216" fill="#e2e8f0" font-family="monospace" font-size="10">auth_challenges</text>
+  </g>
+
+  <!-- Layer 4: Consortium Blockchain Layer (Right) -->
+  <g transform="translate(840, 105)">
+    <rect width="220" height="450" rx="10" fill="url(#cardGradMin)" stroke="#8b5cf6" stroke-width="1.5"/>
+    <rect x="16" y="16" width="188" height="28" rx="4" fill="#6d28d9"/>
+    <text x="110" y="35" fill="#ffffff" font-family="system-ui, sans-serif" font-size="11" font-weight="700" text-anchor="middle">4. CONSORTIUM EVM (:8545)</text>
+
+    <!-- Contract 1 -->
+    <rect x="16" y="60" width="188" height="110" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="28" y="82" fill="#a78bfa" font-family="system-ui, sans-serif" font-size="11" font-weight="700">IdentityRegistry.sol</text>
+    <text x="28" y="100" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="10">• DID Resolution</text>
+    <text x="28" y="118" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="10">• Roles (ADMIN, USER...)</text>
+    <text x="28" y="136" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="10">• Status: ACTIVE / REVOKED</text>
+    <text x="28" y="154" fill="#38bdf8" font-family="monospace" font-size="9">resolveDID(), isActive()</text>
+
+    <!-- Contract 2 -->
+    <rect x="16" y="180" width="188" height="120" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="28" y="202" fill="#a78bfa" font-family="system-ui, sans-serif" font-size="11" font-weight="700">AccessControl.sol</text>
+    <text x="28" y="220" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="10">• Versioned Permission Array</text>
+    <text x="28" y="238" fill="#10b981" font-family="system-ui, sans-serif" font-size="10" font-weight="700">• checkPermissionAtTime()</text>
+    <text x="28" y="256" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="10">• checkPermissionNow()</text>
+    <text x="28" y="274" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="10">• recordAccess() Log</text>
+
+    <!-- Contract 3 -->
+    <rect x="16" y="310" width="188" height="110" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="28" y="332" fill="#a78bfa" font-family="system-ui, sans-serif" font-size="11" font-weight="700">AssetRegistry.sol</text>
+    <text x="28" y="350" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="10">• OpenZeppelin ERC-721</text>
+    <text x="28" y="368" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="10">• assetHash (SHA-256)</text>
+    <text x="28" y="386" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="10">• ownerDID Binding</text>
+    <text x="28" y="404" fill="#38bdf8" font-family="monospace" font-size="9">registerAsset(), getAsset()</text>
+  </g>
+</svg>

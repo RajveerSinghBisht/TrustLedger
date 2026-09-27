@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 640" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad7" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0f1d"/>
+      <stop offset="100%" stop-color="#060912"/>
+    </linearGradient>
+    <linearGradient id="cardGrad7" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <marker id="arrowRed" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#ef4444"/>
+    </marker>
+    <marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrowYellow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#f59e0b"/>
+    </marker>
+  </defs>
+
+  <rect width="1100" height="640" fill="url(#bgGrad7)"/>
+
+  <!-- Title Banner -->
+  <rect x="40" y="20" width="1020" height="54" rx="8" fill="#111827" stroke="#1f2937" stroke-width="1"/>
+  <circle cx="68" cy="47" r="10" fill="#ef4444" opacity="0.2"/>
+  <circle cx="68" cy="47" r="5" fill="#ef4444"/>
+  <text x="90" y="52" fill="#f8fafc" font-family="system-ui, sans-serif" font-size="16" font-weight="700">Cryptographic Key Perimeter &amp; Strict Invariant Boundaries</text>
+  <rect x="880" y="34" width="160" height="26" rx="13" fill="#450a0a"/>
+  <text x="960" y="51" fill="#fca5a5" font-family="system-ui, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Defense-in-Depth</text>
+
+  <!-- Container for the 4 Keys -->
+  <g transform="translate(40, 95)">
+    <!-- Key 1: Relayer -->
+    <g transform="translate(0, 0)">
+      <rect width="240" height="230" rx="8" fill="url(#cardGrad7)" stroke="#ef4444" stroke-width="1.5"/>
+      <rect x="14" y="14" width="70" height="20" rx="3" fill="#dc2626"/><text x="49" y="28" fill="#ffffff" font-family="system-ui, sans-serif" font-size="9" font-weight="700" text-anchor="middle">KEY #1</text>
+      <text x="14" y="56" fill="#f87171" font-family="system-ui, sans-serif" font-size="13" font-weight="700">RELAYER_KEY</text>
+      <text x="14" y="74" fill="#64748b" font-family="system-ui, sans-serif" font-size="10">EVM Account Private Key</text>
+      <line x1="14" y1="84" x2="226" y2="84" stroke="#334155" stroke-width="1"/>
+      <text x="14" y="104" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Signs on-chain state writes</text>
+      <text x="14" y="122" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Calls <tspan font-family="monospace">registerAsset()</tspan></text>
+      <text x="14" y="140" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Calls <tspan font-family="monospace">setPermission()</tspan></text>
+      <text x="14" y="158" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Calls <tspan font-family="monospace">recordAccess()</tspan></text>
+      <rect x="14" y="180" width="212" height="34" rx="4" fill="#450a0a"/>
+      <text x="120" y="201" fill="#fca5a5" font-family="system-ui, sans-serif" font-size="10" font-weight="600" text-anchor="middle">Cannot Sign Proof Bundles</text>
+    </g>
+
+    <!-- Key 2: Backend Signer -->
+    <g transform="translate(260, 0)">
+      <rect width="240" height="230" rx="8" fill="url(#cardGrad7)" stroke="#3b82f6" stroke-width="1.5"/>
+      <rect x="14" y="14" width="70" height="20" rx="3" fill="#2563eb"/><text x="49" y="28" fill="#ffffff" font-family="system-ui, sans-serif" font-size="9" font-weight="700" text-anchor="middle">KEY #2</text>
+      <text x="14" y="56" fill="#60a5fa" font-family="system-ui, sans-serif" font-size="13" font-weight="700">SIGNING_KEY</text>
+      <text x="14" y="74" fill="#64748b" font-family="system-ui, sans-serif" font-size="10">EIP-191 ECDSA Keypair</text>
+      <line x1="14" y1="84" x2="226" y2="84" stroke="#334155" stroke-width="1"/>
+      <text x="14" y="104" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Signs <tspan font-family="monospace">X-Proof-Bundle</tspan></text>
+      <text x="14" y="122" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Protocol Authority Signature</text>
+      <text x="14" y="140" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Standalone Third-Party Proof</text>
+      <text x="14" y="158" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Offline Verifier Trust Anchor</text>
+      <rect x="14" y="180" width="212" height="34" rx="4" fill="#172554"/>
+      <text x="120" y="201" fill="#93c5fd" font-family="system-ui, sans-serif" font-size="10" font-weight="600" text-anchor="middle">Must Never Touch On-Chain Gas</text>
+    </g>
+
+    <!-- Key 3: Document Master Key -->
+    <g transform="translate(520, 0)">
+      <rect width="240" height="230" rx="8" fill="url(#cardGrad7)" stroke="#f59e0b" stroke-width="1.5"/>
+      <rect x="14" y="14" width="70" height="20" rx="3" fill="#d97706"/><text x="49" y="28" fill="#ffffff" font-family="system-ui, sans-serif" font-size="9" font-weight="700" text-anchor="middle">KEY #3</text>
+      <text x="14" y="56" fill="#fbbf24" font-family="system-ui, sans-serif" font-size="13" font-weight="700">MASTER_KEY</text>
+      <text x="14" y="74" fill="#64748b" font-family="system-ui, sans-serif" font-size="10">256-bit Symmetric Master</text>
+      <line x1="14" y1="84" x2="226" y2="84" stroke="#334155" stroke-width="1"/>
+      <text x="14" y="104" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• AES-256-GCM Key Envelope</text>
+      <text x="14" y="122" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Wraps per-asset DEK keys</text>
+      <text x="14" y="140" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Never touches database disk</text>
+      <text x="14" y="158" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Never touches blockchain</text>
+      <rect x="14" y="180" width="212" height="34" rx="4" fill="#451a03"/>
+      <text x="120" y="201" fill="#fde68a" font-family="system-ui, sans-serif" font-size="10" font-weight="600" text-anchor="middle">Transient In-Memory Only</text>
+    </g>
+
+    <!-- Key 4: JWT Session Secrets -->
+    <g transform="translate(780, 0)">
+      <rect width="240" height="230" rx="8" fill="url(#cardGrad7)" stroke="#10b981" stroke-width="1.5"/>
+      <rect x="14" y="14" width="70" height="20" rx="3" fill="#059669"/><text x="49" y="28" fill="#ffffff" font-family="system-ui, sans-serif" font-size="9" font-weight="700" text-anchor="middle">KEY #4</text>
+      <text x="14" y="56" fill="#34d399" font-family="system-ui, sans-serif" font-size="13" font-weight="700">JWT_SECRETS</text>
+      <text x="14" y="74" fill="#64748b" font-family="system-ui, sans-serif" font-size="10">HMAC-SHA256 Session Key</text>
+      <line x1="14" y1="84" x2="226" y2="84" stroke="#334155" stroke-width="1"/>
+      <text x="14" y="104" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• 15-minute token TTL</text>
+      <text x="14" y="122" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Zero-downtime key rotation</text>
+      <text x="14" y="140" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Uses <tspan font-family="monospace">JWT_SECRET_PREV</tspan></text>
+      <text x="14" y="158" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• In-memory client storage</text>
+      <rect x="14" y="180" width="212" height="34" rx="4" fill="#064e3b"/>
+      <text x="120" y="201" fill="#a7f3d0" font-family="system-ui, sans-serif" font-size="10" font-weight="600" text-anchor="middle">Prevents Token Hijacking</text>
+    </g>
+  </g>
+
+  <!-- Startup Invariant Security Guard Banner -->
+  <g transform="translate(40, 360)">
+    <rect width="1020" height="240" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+    <rect x="20" y="18" width="180" height="24" rx="4" fill="#334155"/>
+    <text x="110" y="34" fill="#f8fafc" font-family="system-ui, sans-serif" font-size="11" font-weight="700" text-anchor="middle">STARTUP INVARIANTS CHECK</text>
+    <text x="215" y="35" fill="#38bdf8" font-family="monospace" font-size="12">backend/src/config.ts</text>
+
+    <!-- Checklist grid -->
+    <g transform="translate(20, 60)">
+      <!-- Check 1 -->
+      <rect x="0" y="0" width="470" height="66" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+      <circle cx="25" cy="33" r="10" fill="#10b981"/>
+      <text x="25" y="37" fill="#ffffff" font-family="system-ui, sans-serif" font-size="11" font-weight="700" text-anchor="middle">✓</text>
+      <text x="48" y="28" fill="#f8fafc" font-family="system-ui, sans-serif" font-size="11" font-weight="700">Strict Key Isolation (K1 ≠ K2)</text>
+      <text x="48" y="48" fill="#94a3b8" font-family="monospace" font-size="10">assert(RELAYER_PRIVATE_KEY !== BACKEND_SIGNING_PRIVATE_KEY)</text>
+
+      <!-- Check 2 -->
+      <rect x="500" y="0" width="470" height="66" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+      <circle cx="525" cy="33" r="10" fill="#10b981"/>
+      <text x="525" y="37" fill="#ffffff" font-family="system-ui, sans-serif" font-size="11" font-weight="700" text-anchor="middle">✓</text>
+      <text x="548" y="28" fill="#f8fafc" font-family="system-ui, sans-serif" font-size="11" font-weight="700">Entropy Verification</text>
+      <text x="548" y="48" fill="#94a3b8" font-family="monospace" font-size="10">DOCUMENT_MASTER_KEY must be a valid 64-character hex string (256-bit)</text>
+
+      <!-- Check 3 -->
+      <rect x="0" y="80" width="470" height="66" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+      <circle cx="25" cy="113" r="10" fill="#10b981"/>
+      <text x="25" y="117" fill="#ffffff" font-family="system-ui, sans-serif" font-size="11" font-weight="700" text-anchor="middle">✓</text>
+      <text x="48" y="108" fill="#f8fafc" font-family="system-ui, sans-serif" font-size="11" font-weight="700">Smart Contract Bytecode Presence</text>
+      <text x="48" y="128" fill="#94a3b8" font-family="monospace" font-size="10">verifyContractsDeployed() checks bytecode exists on EVM RPC</text>
+
+      <!-- Check 4 -->
+      <rect x="500" y="80" width="470" height="66" rx="6" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+      <circle cx="525" cy="113" r="10" fill="#10b981"/>
+      <text x="525" y="117" fill="#ffffff" font-family="system-ui, sans-serif" font-size="11" font-weight="700" text-anchor="middle">✓</text>
+      <text x="548" y="108" fill="#f8fafc" font-family="system-ui, sans-serif" font-size="11" font-weight="700">Zero-Plaintext Storage Invariant</text>
+      <text x="548" y="128" fill="#94a3b8" font-family="monospace" font-size="10">No unencrypted document or per-asset key is ever written to disk/DB</text>
+    </g>
+  </g>
+</svg>

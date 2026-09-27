@@ -89,13 +89,13 @@ Users never transmit plaintext passwords. Authentication uses structured, domain
 When an authorized subject downloads a document (`GET /api/assets/:id/download`), the backend validates on-chain access, emits an on-chain `AssetAccessed` event, and generates a portable proof bundle:
 ```json
 {
-  "assetId": "0x...",
-  "contentHash": "0x...",
-  "subjectDid": "did:trustledger:0x...",
+  "assetId": "<ASSET_ID>",
+  "contentHash": "<CONTENT_SHA256_HASH>",
+  "subjectDid": "did:trustledger:<USER_ADDRESS>",
   "policyVersion": 3,
   "accessedAt": 1727048123,
-  "blockchainTxHash": "0x...",
-  "signerSignature": "0x..."
+  "blockchainTxHash": "<TRANSACTION_RECEIPT_HASH>",
+  "signerSignature": "<CRYPTOGRAPHIC_SIGNATURE>"
 }
 ```
 *This bundle is returned in the `X-Proof-Bundle` response header and can be verified offline by any third-party auditor.*

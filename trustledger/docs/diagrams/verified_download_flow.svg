@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 720" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0e1a"/>
+      <stop offset="100%" stop-color="#050811"/>
+    </linearGradient>
+    <linearGradient id="cardGrad5" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <marker id="arrowPurple5" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#8b5cf6"/>
+    </marker>
+    <marker id="arrowGreen5" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#10b981"/>
+    </marker>
+  </defs>
+
+  <rect width="1100" height="720" fill="url(#bgGrad5)"/>
+
+  <!-- Title Banner -->
+  <rect x="40" y="20" width="1020" height="54" rx="8" fill="#111827" stroke="#1f2937" stroke-width="1"/>
+  <circle cx="68" cy="47" r="10" fill="#8b5cf6" opacity="0.2"/>
+  <circle cx="68" cy="47" r="5" fill="#8b5cf6"/>
+  <text x="90" y="52" fill="#f8fafc" font-family="system-ui, sans-serif" font-size="16" font-weight="700">Flow 4: Verified Asset Download &amp; Cryptographic Proof Generation</text>
+  <rect x="860" y="34" width="180" height="26" rx="13" fill="#4c1d95"/>
+  <text x="950" y="51" fill="#ddd6fe" font-family="system-ui, sans-serif" font-size="11" font-weight="600" text-anchor="middle">X-Proof-Bundle Header</text>
+
+  <!-- Left: Download Request & On-Chain Gatekeeping -->
+  <g transform="translate(40, 95)">
+    <rect width="480" height="580" rx="8" fill="url(#cardGrad5)" stroke="#38bdf8" stroke-width="1.5"/>
+    <rect x="16" y="16" width="70" height="20" rx="3" fill="#0284c7"/><text x="51" y="30" fill="#ffffff" font-family="system-ui, sans-serif" font-size="10" font-weight="700" text-anchor="middle">STAGE 1</text>
+    <text x="96" y="32" fill="#38bdf8" font-family="system-ui, sans-serif" font-size="14" font-weight="700">On-Chain Gatekeeping (At Block Speed)</text>
+
+    <!-- Substep 1 -->
+    <text x="16" y="66" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">1. Client requests protected asset with JWT:</text>
+    <rect x="16" y="78" width="448" height="42" rx="4" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="28" y="104" fill="#bae6fd" font-family="monospace" font-size="11">GET /api/assets/1042/download [Authorization: Bearer &lt;JWT&gt;]</text>
+
+    <!-- Substep 2: Smart contract check -->
+    <text x="16" y="146" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">2. Real-time Contract Evaluation (STATICCALL):</text>
+    <rect x="16" y="160" width="448" height="150" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <g font-family="monospace" font-size="11">
+      <text x="28" y="184" fill="#a78bfa">AccessControl.checkPermissionNow(1042, did, READ)</text>
+      <text x="28" y="210" fill="#94a3b8">├── 1. Query: <tspan fill="#38bdf8">IdentityRegistry.isActive(subjectAddress)</tspan></text>
+      <text x="28" y="232" fill="#94a3b8">│      └── If REVOKED -&gt; Instant Rejection</text>
+      <text x="28" y="254" fill="#94a3b8">├── 2. Query: <tspan fill="#38bdf8">permissions[key][lastRecord]</tspan></text>
+      <text x="28" y="276" fill="#94a3b8">│      └── validUntil == 0 &amp;&amp; state == GRANTED</text>
+      <text x="28" y="298" fill="#34d399">└── Returns (allowed: true, permissionRecord)</text>
+    </g>
+
+    <!-- Substep 3: Log Access Event -->
+    <text x="16" y="336" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">3. Immutable Access Anchoring on Ledger:</text>
+    <rect x="16" y="350" width="448" height="110" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <g font-family="monospace" font-size="11">
+      <text x="28" y="374" fill="#f59e0b">Relayer submits transaction:</text>
+      <text x="28" y="394" fill="#fde68a">AccessControl.recordAccess(1042, did, 87)</text>
+      <text x="28" y="420" fill="#10b981">Emits on-chain event: AssetAccessed(1042, did, T, 87)</text>
+      <text x="28" y="442" fill="#94a3b8">Receipt TxHash: <tspan fill="#e2e8f0">&lt;ON_CHAIN_TX_HASH&gt;</tspan></text>
+    </g>
+
+    <rect x="16" y="480" width="448" height="74" rx="6" fill="#1e1b4b" stroke="#4338ca" stroke-width="1"/>
+    <text x="28" y="504" fill="#c7d2fe" font-family="system-ui, sans-serif" font-size="11" font-weight="700">Immediate Revocation Invariant:</text>
+    <text x="28" y="524" fill="#e0e7ff" font-family="system-ui, sans-serif" font-size="11">If an identity is revoked in IdentityRegistry, asset downloads</text>
+    <text x="28" y="542" fill="#e0e7ff" font-family="system-ui, sans-serif" font-size="11">are locked immediately at the EVM contract level.</text>
+  </g>
+
+  <!-- Arrow between stages -->
+  <path d="M 520 380 L 552 380" stroke="#8b5cf6" stroke-width="2.5" marker-end="url(#arrowPurple5)"/>
+
+  <!-- Right: Decryption & Proof Bundle Generation -->
+  <g transform="translate(560, 95)">
+    <rect width="500" height="580" rx="8" fill="url(#cardGrad5)" stroke="#10b981" stroke-width="1.5"/>
+    <rect x="16" y="16" width="70" height="20" rx="3" fill="#059669"/><text x="51" y="30" fill="#ffffff" font-family="system-ui, sans-serif" font-size="10" font-weight="700" text-anchor="middle">STAGE 2</text>
+    <text x="96" y="32" fill="#34d399" font-family="system-ui, sans-serif" font-size="14" font-weight="700">Decryption &amp; Cryptographic Proof Bundle</text>
+
+    <!-- Substep 4: Fetch & Decrypt -->
+    <text x="16" y="66" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">4. Envelope Decryption (Zero Memory Footprint):</text>
+    <rect x="16" y="78" width="468" height="150" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <g font-family="monospace" font-size="11" fill="#cbd5e1">
+      <text x="28" y="102">1. SELECT ciphertext from <tspan fill="#38bdf8">encrypted_records</tspan></text>
+      <text x="28" y="124">2. Unwrap transient DEK:</text>
+      <text x="48" y="144" fill="#fbbf24">DEK = AES_GCM_Decrypt(wrappedKey, MASTER_KEY)</text>
+      <text x="28" y="168">3. Decrypt document bytes:</text>
+      <text x="48" y="188" fill="#34d399">rawBytes = AES_GCM_Decrypt(ciphertext, DEK, iv, tag)</text>
+      <text x="28" y="212">4. Integrity verification: <tspan fill="#38bdf8">SHA256(rawBytes) == assetHash</tspan></text>
+    </g>
+
+    <!-- Substep 5: Proof Bundle -->
+    <text x="16" y="254" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">5. Generate Standalone Cryptographic Certificate:</text>
+    <rect x="16" y="268" width="468" height="190" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <g font-family="monospace" font-size="10" fill="#94a3b8">
+      <text x="28" y="290" fill="#a78bfa">// X-Proof-Bundle Content (Canonical JSON):</text>
+      <text x="28" y="310" fill="#e2e8f0">{</text>
+      <text x="44" y="328" fill="#e2e8f0">"assetId": 1042, "assetHash": "&lt;SHA256_HASH&gt;",</text>
+      <text x="44" y="348" fill="#e2e8f0">"accessedBy": "did:trustledger:&lt;USER_ADDRESS&gt;",</text>
+      <text x="44" y="368" fill="#e2e8f0">"accessTimestamp": 1735689600,</text>
+      <text x="44" y="388" fill="#e2e8f0">"permissionVersionUsed": { "id": 87, "state": "GRANTED" },</text>
+      <text x="44" y="408" fill="#e2e8f0">"onChainTxRef": "&lt;ON_CHAIN_TX_HASH&gt;",</text>
+      <text x="44" y="428" fill="#34d399">"signature": "&lt;EIP191_SIGNATURE&gt;" // Protocol Signature</text>
+      <text x="28" y="448" fill="#e2e8f0">}</text>
+    </g>
+
+    <!-- Substep 6: Stream to client -->
+    <text x="16" y="480" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">6. Stream to Client Response:</text>
+    <rect x="16" y="494" width="468" height="60" rx="6" fill="#064e3b" stroke="#059669" stroke-width="1"/>
+    <text x="28" y="518" fill="#ffffff" font-family="system-ui, sans-serif" font-size="11" font-weight="700">✓ Decrypted File Payload (Content-Disposition: attachment)</text>
+    <text x="28" y="538" fill="#a7f3d0" font-family="monospace" font-size="10">Header [X-Proof-Bundle: base64(ProofBundleJSON)]</text>
+  </g>
+</svg>

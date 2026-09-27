@@ -98,8 +98,8 @@ the requester. They keep it; we don't need to.
 ```json
 {
   "assetId": 1042,
-  "assetHash": "0x7f8a...",
-  "accessedBy": "did:trustledger:0xAbC123...",
+  "assetHash": "<SHA256_ASSET_CONTENT_HASH>",
+  "accessedBy": "did:trustledger:<USER_ETHEREUM_ADDRESS>",
   "accessTimestamp": 1735689600,
   "permissionVersionUsed": {
     "permissionId": 87,
@@ -107,8 +107,8 @@ the requester. They keep it; we don't need to.
     "validFrom": 1735660800,
     "validUntil": 0
   },
-  "onChainTxRef": "0x9e1b...",
-  "signature": "0x..."
+  "onChainTxRef": "<ON_CHAIN_TRANSACTION_RECEIPT_HASH>",
+  "signature": "<CRYPTOGRAPHIC_AUTHORITY_SIGNATURE>"
 }
 ```
 

@@ -79,7 +79,7 @@ Permissions are stored as a **versioned timeline**, not a single current-state r
 
 Concretely: when a permission is granted or revoked, the existing permission record's `validUntil` is set to the current timestamp, and a new record with the new state is appended — old records are **never overwritten or deleted**. To check historical authorization, the system finds the record where `validFrom ≤ T < validUntil` for the queried timestamp `T`.
 
-This is implemented in [`AccessControl.sol`](file:///d:/SIH'26/Project%20Files/TrustLedger/trustledger/contracts/contracts/AccessControl.sol)'s `checkPermissionAtTime()` function and exposed via the backend's `GET /api/permissions/verify` endpoint.
+This is implemented in [`AccessControl.sol`](../contracts/contracts/AccessControl.sol)'s `checkPermissionAtTime()` function and exposed via the backend's `GET /api/permissions/verify` endpoint.
 
 ### USP 2: Portable Proof-of-Access (Proof Bundles)
 
@@ -401,12 +401,12 @@ sequenceDiagram
 
     F->>B: POST /api/auth/challenge { did }
     B->>IR: resolveDID(did) → address
-    IR-->>B: expectedAddress (or 0x0 → 404)
+    IR-->>B: expectedAddress (or address(0) → 404)
     B->>B: Generate nonce, build canonical message
     B->>B: Store challenge { nonce, did, expectedAddress, consumed: false }
     B-->>F: { message, expiresAt }
     F->>W: Sign message (personal_sign)
-    W-->>F: signature (0x...)
+    W-->>F: signature (<ECDSA_SIGNATURE>)
     F->>B: POST /api/auth/verify { did, message, signature }
     B->>B: Extract nonce from message
     B->>B: Lookup challenge by nonce (reject if consumed/expired)
@@ -428,7 +428,7 @@ PRAMAAN Authentication Request
 
 Domain: trustledger.local
 Purpose: Authenticate to PRAMAAN backend
-DID: did:trustledger:0xABC...
+DID: did:trustledger:<USER_ADDRESS>
 Nonce: <128-bit+ cryptographically random hex>
 Issued At: <ISO-8601>
 Expiration: <ISO-8601>
@@ -628,8 +628,8 @@ Connect Wallet → Check Network → Post Challenge → Sign Message → Verify 
 ```json
 {
   "assetId": 1042,
-  "assetHash": "0x7f8a...",
-  "accessedBy": "did:trustledger:0xAbC123...",
+  "assetHash": "<SHA256_ASSET_CONTENT_HASH>",
+  "accessedBy": "did:trustledger:<USER_ETHEREUM_ADDRESS>",
   "accessTimestamp": 1735689600,
   "permissionVersionUsed": {
     "permissionId": 87,
@@ -637,8 +637,8 @@ Connect Wallet → Check Network → Post Challenge → Sign Message → Verify 
     "validFrom": 1735660800,
     "validUntil": 0
   },
-  "onChainTxRef": "0x9e1b...",
-  "signature": "0x..."
+  "onChainTxRef": "<ON_CHAIN_TRANSACTION_RECEIPT_HASH>",
+  "signature": "<CRYPTOGRAPHIC_AUTHORITY_SIGNATURE>"
 }
 ```
 
@@ -852,7 +852,7 @@ C4Context
 
 ### 12.3 Deployment Script Auto-Wiring
 
-The deploy script ([`deploy.js`](file:///d:/SIH'26/Project%20Files/TrustLedger/trustledger/contracts/scripts/deploy.js)) automatically writes freshly deployed contract addresses into `backend/.env`, preserving the file's existing line-ending style. This eliminates the manual, error-prone copy-paste step after every Hardhat node restart.
+The deploy script ([`deploy.js`](../contracts/scripts/deploy.js)) automatically writes freshly deployed contract addresses into `backend/.env`, preserving the file's existing line-ending style. This eliminates the manual, error-prone copy-paste step after every Hardhat node restart.
 
 ---
 

@@ -39,6 +39,7 @@
 - [Subsystem Guides](#-subsystem-guides)
 - [Smart Contracts Architecture](#-smart-contracts-architecture)
 - [Cryptographic Security Model](#-cryptographic-security-model)
+- [Repository Directory Structure](#-repository-directory-structure)
 - [Troubleshooting & FAQ](#-troubleshooting--faq)
 - [License & SIH Disclaimer](#-license--sih-disclaimer)
 
@@ -85,6 +86,16 @@ Every authorized asset download emits a self-contained cryptographic proof packa
 
 ## 🔄 System Architecture & Flow
 
+> [!TIP]
+> **Detailed Interactive Guide & Vector Diagrams**: For complete multi-tier architectural blueprints, dynamic RBAC timeline flows, envelope encryption sequences, and live CLI inspection tools, see [docs/ARCHITECTURE_AND_FLOW.md](docs/ARCHITECTURE_AND_FLOW.md).
+
+<p align="center">
+  <img src="docs/diagrams/readme_system_flow.svg" width="100%" alt="PRAMAAN Core System Architecture & Execution Flow" />
+</p>
+
+<details>
+<summary><b>🔍 Click to expand Raw Protocol Sequence Definition</b></summary>
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -115,6 +126,7 @@ sequenceDiagram
     API-->>UI: Stream Decrypted Asset + X-Proof-Bundle Header
     UI-->>User: Download Document & Proof Certificate
 ```
+</details>
 
 ---
 
@@ -220,6 +232,50 @@ IdentityRegistry.sol ──> AccessControl.sol ──> AssetRegistry.sol
 | **`IdentityRegistry.sol`** | Manages DIDs, roles (`ADMIN`, `MANAGER`, `AUDITOR`, `USER`), and public keys. | `registerIdentity()`, `revokeIdentity()`, `getIdentity()`, `hasRole()` |
 | **`AccessControl.sol`** | Enforces versioned temporal RBAC policies and validity timestamps. | `grantAccess()`, `revokeAccess()`, `isValid()`, `getPolicyAtTime()` |
 | **`AssetRegistry.sol`** | Immutable register of encrypted document digests and ownership. | `registerAsset()`, `transferAsset()`, `logAccessEvent()`, `getAsset()` |
+
+---
+
+## 🛡 Cryptographic Security Model
+
+- **Document Encryption**: Off-chain symmetric encryption with **AES-256-GCM** (Galois/Counter Mode), guaranteeing both confidentiality and ciphertext integrity.
+- **Content Hashing**: Cryptographic document fingerprinting with **SHA-256**.
+- **Wallet Authentication**: **EIP-712** typed structured data signing. Users sign domain-bound challenge payloads with MetaMask/Coinbase Wallet — no plaintext passwords.
+- **Audit Verifier**: Public verification endpoint (`/verify`) decrypts and audits proof bundles client-side against the on-chain Merkle root.
+
+---
+
+## 📁 Repository Directory Structure
+
+```
+trustledger/
+├── package.json             # Workspace package config
+├── start-all.js             # Automated cross-platform stack orchestrator
+├── start-all.ps1            # Local PowerShell launcher
+├── README.md                # Root project documentation (this file)
+│
+├── contracts/               # Solidity Smart Contracts (Hardhat)
+│   ├── contracts/           # IdentityRegistry, AccessControl, AssetRegistry
+│   ├── scripts/deploy.js    # Ordered deployment script with auto-.env injection
+│   ├── test/                # Unit test suites (Mocha/Chai)
+│   └── hardhat.config.js    # Hardhat EVM network configuration
+│
+├── backend/                 # Node.js + TypeScript API Engine (Port 3000)
+│   ├── src/                 # Controllers, Repositories, Services, Routes
+│   ├── prisma/              # Schema definitions and database migrations
+│   ├── docker-compose.yml   # PostgreSQL container configuration
+│   └── .env                 # Automatically populated on contract deployment
+│
+├── frontend/                # Next.js 16 Web Application (Port 3001)
+│   ├── app/                 # App Router (pages: /, /identities, /assets, /verify...)
+│   ├── components/          # UI components, NavBar, 3D ASCII graphics
+│   ├── public/              # High-res PRAMAAN logo, icon, and favicon assets
+│   └── lib/                 # AuthContext, ThemeContext, API client
+│
+└── docs/                    # Technical specifications
+    ├── ARCHITECTURE_AND_FLOW.md  # Unified architecture & flow guide
+    ├── diagrams/            # High-resolution vector SVG diagrams
+    └── PRAMAAN_Project_Documentation.md # Master SIH hackathon proposal & report
+```
 
 ---
 

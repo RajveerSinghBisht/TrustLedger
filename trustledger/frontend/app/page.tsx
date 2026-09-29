@@ -8,6 +8,7 @@ import { Card, Badge } from "@/components/ui";
 import { AsciiSphere } from "@/components/AsciiSphere";
 import { AsciiCryptoCube } from "@/components/AsciiCryptoCube";
 import { AsciiWaveField } from "@/components/AsciiWaveField";
+import { EvaluationShowcaseModal } from "@/components/EvaluationShowcaseModal";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -433,6 +434,15 @@ const techStackItems = [
 
 export default function Home() {
   const { address, did, token, claims } = useAuth();
+  const [showcaseOpen, setShowcaseOpen] = useState(true);
+
+  useEffect(() => {
+    function handleOpenShowcase() {
+      setShowcaseOpen(true);
+    }
+    window.addEventListener("open-showcase-hub", handleOpenShowcase);
+    return () => window.removeEventListener("open-showcase-hub", handleOpenShowcase);
+  }, []);
 
   // Feature rotator
   const [featureIdx, setFeatureIdx] = useState(0);
@@ -496,7 +506,13 @@ export default function Home() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen relative">
+      {/* Interactive Evaluation Showcase Modal — Rendered Directly Over the Home Page */}
+      <EvaluationShowcaseModal
+        isOpen={showcaseOpen}
+        onClose={() => setShowcaseOpen(false)}
+      />
+
       {/* =========================================================================
           SECTION 1: HERO COMMAND CENTER (Optimus Editorial Style)
       ========================================================================= */}

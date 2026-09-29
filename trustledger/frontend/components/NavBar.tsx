@@ -77,25 +77,6 @@ export function NavBar() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-(--border) bg-(--bg)/90 backdrop-blur-md transition-colors duration-300">
-      {/* Top Telemetry Ticker Bar */}
-      <div className="border-b border-(--border)/60 px-4 sm:px-6 lg:px-8 h-7 flex items-center justify-between text-[11px] font-mono tracking-widest text-(--text-muted) bg-(--surface)/40">
-        <div className="flex items-center gap-3 sm:gap-4 overflow-hidden text-ellipsis whitespace-nowrap">
-          <span className="flex items-center gap-1.5 shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-(--success) animate-pulse" />
-            <span className="text-(--text-primary) font-semibold">ALL_SYSTEMS_OPERATIONAL</span>
-          </span>
-          <span className="hidden md:inline text-(--border)">|</span>
-          <span className="hidden md:inline shrink-0">HARDHAT_NETWORK: 31337</span>
-          <span className="hidden 2xl:inline text-(--border)">|</span>
-          <span className="hidden 2xl:inline shrink-0">SIH PROTOCOL ENGINE 26125</span>
-        </div>
-        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-          <span className="tabular-nums text-(--text-muted)">{timeStr || "SYSTEM ACTIVE"}</span>
-          <span className="text-(--border)">|</span>
-          <span className="font-mono text-xs text-(--text-primary)">v1.0.4</span>
-        </div>
-      </div>
-
       {/* Main Navigation Bar */}
       <div className="mx-auto max-w-[1600px] w-full px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-3 xl:gap-6">
         {/* Left: Brand & Navigation Links */}
@@ -205,6 +186,17 @@ export function NavBar() {
               </button>
             )}
           </div>
+
+          {/* Demo Info Button */}
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent("open-showcase-hub"))}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-(--border) hover:border-emerald-500/50 bg-(--surface)/80 text-xs font-mono text-(--text-muted) hover:text-(--text-primary) transition-all shrink-0"
+            title="PRAMAAN Evaluation Demo Notice"
+          >
+            <span>ℹ️</span>
+            <span className="hidden sm:inline">Demo Info</span>
+          </button>
 
           {/* Theme Toggle Button at FAR RIGHT */}
           <button

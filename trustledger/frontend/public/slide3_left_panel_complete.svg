@@ -1,0 +1,225 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 820" width="100%" height="100%" style="background:#ffffff; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <!-- Shadows -->
+    <filter id="cardShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#0f172a" flood-opacity="0.08"/>
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.04"/>
+    </filter>
+    <filter id="pillShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.2"/>
+    </filter>
+    
+    <!-- Gradients -->
+    <linearGradient id="greenPill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#16a34a"/><stop offset="100%" stop-color="#15803d"/></linearGradient>
+    <linearGradient id="bluePill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0284c7"/><stop offset="100%" stop-color="#0369a1"/></linearGradient>
+    <linearGradient id="redPill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#dc2626"/><stop offset="100%" stop-color="#b91c1c"/></linearGradient>
+    <linearGradient id="purplePill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#6d28d9"/></linearGradient>
+
+    <!-- Marker Arrow -->
+    <marker id="arrowNext" markerWidth="10" markerHeight="10" refX="7" refY="5" orient="auto">
+      <path d="M 1 2 L 7 5 L 1 8" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <!-- ==================== HEADER STRIP ==================== -->
+  <text x="30" y="32" fill="#0f172a" font-size="19" font-weight="900" letter-spacing="0.2">What was allowed THEN?</text>
+  <text x="275" y="32" fill="#64748b" font-size="14.5" font-weight="600">Most systems show who has access now.</text>
+  <text x="560" y="32" fill="#0369a1" font-size="14.5" font-weight="800">PRAMAAN verifies authorization at the time access occurred.</text>
+
+  <!-- ==================== CARD 1: 10:00 AM (GREEN) ==================== -->
+  <g transform="translate(30, 50)">
+    <rect x="0" y="24" width="275" height="255" rx="16" fill="#f0fdf4" stroke="#86efac" stroke-width="2" filter="url(#cardShadow)"/>
+    <g filter="url(#pillShadow)">
+      <rect x="62" y="5" width="150" height="38" rx="19" fill="url(#greenPill)"/>
+      <text x="137" y="30" fill="#ffffff" font-size="16" font-weight="800" text-anchor="middle">10:00 AM</text>
+    </g>
+    <!-- Icon -->
+    <g transform="translate(112, 54)">
+      <circle cx="25" cy="20" r="15" fill="#16a34a"/>
+      <path d="M 5 50 C 5 36 14 33 25 33 C 36 33 45 36 45 50 Z" fill="#16a34a"/>
+      <circle cx="37" cy="35" r="8" fill="#ffffff"/>
+      <path d="M 33 35 L 36 38 L 41 32" fill="none" stroke="#16a34a" stroke-width="2.2" stroke-linecap="round"/>
+    </g>
+    <text x="137" y="122" fill="#15803d" font-size="14" font-weight="900" text-anchor="middle" letter-spacing="0.5">ACCESS GRANTED</text>
+    <g transform="translate(20, 136)" font-size="11.5" fill="#334155">
+      <text x="0" y="16">📄 Asset: <tspan fill="#0f172a" font-weight="800">RADAR-TRX-09</tspan></text>
+      <text x="0" y="36">🔑 Action: <tspan fill="#16a34a" font-weight="800">READ (Telemetry)</tspan></text>
+      <text x="0" y="56">👤 To: <tspan fill="#0f172a" font-weight="700">Officer A (Avionics)</tspan></text>
+      <text x="0" y="76">⚙️ Record: <tspan fill="#0284c7" font-weight="700">Permission ID: 4</tspan></text>
+      <text x="0" y="96" fill="#64748b" font-size="11">⏱️ validFrom: 10:00 AM</text>
+    </g>
+  </g>
+
+  <!-- Arrow 1->2 -->
+  <line x1="312" y1="185" x2="338" y2="185" stroke="#94a3b8" stroke-width="3" marker-end="url(#arrowNext)"/>
+
+  <!-- ==================== CARD 2: 11:32 AM (BLUE) ==================== -->
+  <g transform="translate(345, 50)">
+    <rect x="0" y="24" width="275" height="255" rx="16" fill="#f0f9ff" stroke="#7dd3fc" stroke-width="2" filter="url(#cardShadow)"/>
+    <g filter="url(#pillShadow)">
+      <rect x="62" y="5" width="150" height="38" rx="19" fill="url(#bluePill)"/>
+      <text x="137" y="30" fill="#ffffff" font-size="16" font-weight="800" text-anchor="middle">11:32 AM</text>
+    </g>
+    <!-- Icon -->
+    <g transform="translate(112, 54)">
+      <rect x="11" y="8" width="28" height="38" rx="3" fill="#0284c7"/>
+      <line x1="17" y1="18" x2="31" y2="18" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="17" y1="25" x2="33" y2="25" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="17" y1="32" x2="27" y2="32" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <text x="137" y="122" fill="#0369a1" font-size="14" font-weight="900" text-anchor="middle" letter-spacing="0.5">ACCESS OCCURS</text>
+    <g transform="translate(20, 136)" font-size="11.5" fill="#334155">
+      <text x="0" y="16">📄 Asset: <tspan fill="#0f172a" font-weight="800">RADAR-TRX-09</tspan></text>
+      <text x="0" y="36">🔑 Action: <tspan fill="#0284c7" font-weight="800">READ (Decrypted)</tspan></text>
+      <text x="0" y="56">👤 By: <tspan fill="#0f172a" font-weight="700">Officer A (Avionics)</tspan></text>
+      <text x="0" y="76">⚙️ Check: <tspan fill="#16a34a" font-weight="700">state == GRANTED</tspan></text>
+      <text x="0" y="96" fill="#0369a1" font-weight="700">🛡️ Proof Receipt Emitted</text>
+    </g>
+  </g>
+
+  <!-- Arrow 2->3 -->
+  <line x1="627" y1="185" x2="653" y2="185" stroke="#94a3b8" stroke-width="3" marker-end="url(#arrowNext)"/>
+
+  <!-- ==================== CARD 3: 12:00 PM (RED) ==================== -->
+  <g transform="translate(660, 50)">
+    <rect x="0" y="24" width="275" height="255" rx="16" fill="#fef2f2" stroke="#fca5a5" stroke-width="2" filter="url(#cardShadow)"/>
+    <g filter="url(#pillShadow)">
+      <rect x="62" y="5" width="150" height="38" rx="19" fill="url(#redPill)"/>
+      <text x="137" y="30" fill="#ffffff" font-size="16" font-weight="800" text-anchor="middle">12:00 PM</text>
+    </g>
+    <!-- Icon -->
+    <g transform="translate(112, 54)">
+      <circle cx="25" cy="20" r="15" fill="#dc2626"/>
+      <path d="M 5 50 C 5 36 14 33 25 33 C 36 33 45 36 45 50 Z" fill="#dc2626"/>
+      <circle cx="37" cy="35" r="8" fill="#ffffff"/>
+      <path d="M 33 31 L 41 39 M 41 31 L 33 39" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round"/>
+    </g>
+    <text x="137" y="122" fill="#b91c1c" font-size="14" font-weight="900" text-anchor="middle" letter-spacing="0.5">ACCESS REVOKED</text>
+    <g transform="translate(20, 136)" font-size="11.5" fill="#334155">
+      <text x="0" y="16">📄 Asset: <tspan fill="#0f172a" font-weight="800">RADAR-TRX-09</tspan></text>
+      <text x="0" y="36">🔑 Action: <tspan fill="#b91c1c" font-weight="800">READ (Revoked)</tspan></text>
+      <text x="0" y="56">👤 From: <tspan fill="#0f172a" font-weight="700">Posting / Rotation Out</tspan></text>
+      <text x="0" y="76">⚙️ Record 4 Sealed: <tspan fill="#b91c1c" font-weight="700">validUntil=12:00</tspan></text>
+      <text x="0" y="96" fill="#64748b">⏱️ Record 5: state=REVOKED</text>
+    </g>
+  </g>
+
+  <!-- Arrow 3->4 -->
+  <line x1="942" y1="185" x2="968" y2="185" stroke="#94a3b8" stroke-width="3" marker-end="url(#arrowNext)"/>
+
+  <!-- ==================== CARD 4: 02:00 PM / LATER AUDIT (PURPLE) ==================== -->
+  <g transform="translate(975, 50)">
+    <rect x="0" y="24" width="275" height="255" rx="16" fill="#faf5ff" stroke="#d8b4fe" stroke-width="2" filter="url(#cardShadow)"/>
+    <g filter="url(#pillShadow)">
+      <rect x="52" y="5" width="170" height="38" rx="19" fill="url(#purplePill)"/>
+      <text x="137" y="30" fill="#ffffff" font-size="14.5" font-weight="800" text-anchor="middle">02:00 PM (AUDIT)</text>
+    </g>
+    <!-- Icon -->
+    <g transform="translate(112, 54)">
+      <circle cx="20" cy="20" r="13" fill="none" stroke="#7c3aed" stroke-width="4"/>
+      <line x1="30" y1="30" x2="40" y2="40" stroke="#7c3aed" stroke-width="4" stroke-linecap="round"/>
+    </g>
+    <text x="137" y="122" fill="#6d28d9" font-size="13.5" font-weight="900" text-anchor="middle" letter-spacing="0.3">HISTORICAL QUERY</text>
+    <g transform="translate(15, 136)">
+      <rect x="0" y="0" width="245" height="38" rx="6" fill="#f3e8ff" stroke="#e9d5ff"/>
+      <text x="10" y="16" fill="#581c87" font-size="10.5" font-weight="700">"Was 11:32 AM access to</text>
+      <text x="10" y="30" fill="#581c87" font-size="10.5" font-weight="700">RADAR-TRX-09 authorized?"</text>
+      
+      <!-- Actual Contract Return Value Box -->
+      <g transform="translate(0, 46)">
+        <rect x="0" y="0" width="245" height="60" rx="8" fill="#ecfdf5" stroke="#10b981" stroke-width="1.5"/>
+        <text x="8" y="16" fill="#065f46" font-size="10" font-weight="900">checkPermissionAtTime(11:32)</text>
+        <g font-family="monospace" font-size="8.5" fill="#047857" font-weight="700">
+          <text x="8" y="31">returns Permission { state: GRANTED,</text>
+          <text x="8" y="44">id: 4, validFrom: 10:00, validUntil: 12:00 }</text>
+        </g>
+      </g>
+    </g>
+  </g>
+
+  <!-- ==================== TIMELINE PROGRESS BAR ==================== -->
+  <g transform="translate(30, 335)">
+    <line x1="137" y1="10" x2="1112" y2="10" stroke="#cbd5e1" stroke-width="4"/>
+    <line x1="137" y1="10" x2="797" y2="10" stroke="#0284c7" stroke-width="4"/>
+
+    <circle cx="137" cy="10" r="9" fill="#16a34a" stroke="#ffffff" stroke-width="2.5"/>
+    <circle cx="482" cy="10" r="9" fill="#0284c7" stroke="#ffffff" stroke-width="2.5"/>
+    <circle cx="797" cy="10" r="9" fill="#dc2626" stroke="#ffffff" stroke-width="2.5"/>
+    <circle cx="1112" cy="10" r="9" fill="#7c3aed" stroke="#ffffff" stroke-width="2.5"/>
+
+    <rect x="0" y="24" width="600" height="36" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.2"/>
+    <text x="300" y="42" fill="#15803d" font-size="12" font-weight="900" text-anchor="middle">Permission ID 4: State GRANTED (10:00 AM – 12:00 PM)</text>
+    <text x="300" y="54" fill="#166534" font-size="10" font-weight="600" text-anchor="middle">Access at 11:32 AM falls within validFrom &lt;= t &lt; validUntil</text>
+
+    <rect x="620" y="24" width="600" height="36" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="1.2"/>
+    <text x="920" y="42" fill="#b91c1c" font-size="12" font-weight="900" text-anchor="middle">Permission ID 5: State REVOKED (12:00 PM Onwards)</text>
+    <text x="920" y="54" fill="#991b1b" font-size="10" font-weight="600" text-anchor="middle">Appended to history; earlier 11:32 AM record remains intact</text>
+  </g>
+
+  <!-- ==================== DIVIDER LINE ==================== -->
+  <line x1="30" y1="415" x2="1250" y2="415" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="6,6"/>
+
+  <!-- ==================== LOWER HALF: PURELY ADDITIVE 3-COLUMN TABLE ==================== -->
+  <g transform="translate(30, 435)">
+    <!-- Header -->
+    <text x="0" y="20" fill="#0f172a" font-size="17" font-weight="900">Complementary Positioning Alongside Existing Solutions</text>
+    <text x="0" y="38" fill="#475569" font-size="12.5" font-weight="600">Existing solutions address document verification and asset tracking. PRAMAAN addresses who was authorized to access a record, and when.</text>
+
+    <!-- Table Container Card -->
+    <g transform="translate(0, 50)">
+      <!-- Column 1: SecureDoc -->
+      <rect x="0" y="0" width="390" height="245" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+      <rect x="0" y="0" width="390" height="42" rx="14" fill="#f1f5f9"/>
+      <text x="20" y="26" fill="#0f172a" font-size="14" font-weight="800">SecureDoc</text>
+      <rect x="235" y="10" width="140" height="22" rx="11" fill="#e2e8f0"/>
+      <text x="305" y="25" fill="#334155" font-size="10" font-weight="700" text-anchor="middle">Document Issuance</text>
+
+      <g transform="translate(20, 60)" font-size="12" fill="#334155">
+        <text x="0" y="18" font-weight="800" fill="#0f172a">Published Role (BEL's Page):</text>
+        <text x="0" y="38" fill="#475569">• Tamper-proof document issuance</text>
+        <text x="0" y="58" fill="#475569">• Open verification from anywhere</text>
+        
+        <text x="0" y="102" font-weight="800" fill="#0284c7">What PRAMAAN Adds Alongside It:</text>
+        <text x="0" y="124" font-weight="600" fill="#0f172a">• A verifiable on-chain record of WHO</text>
+        <text x="0" y="142" font-weight="600" fill="#0f172a">  was authorized to access a document,</text>
+        <text x="0" y="160" font-weight="600" fill="#0f172a">  and WHEN.</text>
+      </g>
+
+      <!-- Column 2: SecureLedger -->
+      <rect x="415" y="0" width="390" height="245" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+      <rect x="415" y="0" width="390" height="42" rx="14" fill="#f1f5f9"/>
+      <text x="435" y="26" fill="#0f172a" font-size="14" font-weight="800">SecureLedger</text>
+      <rect x="670" y="10" width="120" height="22" rx="11" fill="#e2e8f0"/>
+      <text x="730" y="25" fill="#334155" font-size="10" font-weight="700" text-anchor="middle">Asset Tracking</text>
+
+      <g transform="translate(435, 60)" font-size="12" fill="#334155">
+        <text x="0" y="18" font-weight="800" fill="#0f172a">Published Role (BEL's Page):</text>
+        <text x="0" y="38" fill="#475569">• Permissioned asset transfer</text>
+        <text x="0" y="58" fill="#475569">• Cross-organization asset tracking</text>
+        
+        <text x="0" y="102" font-weight="800" fill="#0284c7">What PRAMAAN Adds Alongside It:</text>
+        <text x="0" y="124" font-weight="600" fill="#0f172a">• Access authorization governance for</text>
+        <text x="0" y="142" font-weight="600" fill="#0f172a">  the classified records attached</text>
+        <text x="0" y="160" font-weight="600" fill="#0f172a">  to tracked physical assets.</text>
+      </g>
+
+      <!-- Column 3: PRAMAAN -->
+      <rect x="830" y="0" width="390" height="245" rx="14" fill="#f0f9ff" stroke="#0284c7" stroke-width="2.5" filter="url(#cardShadow)"/>
+      <rect x="830" y="0" width="390" height="42" rx="14" fill="#e0f2fe"/>
+      <text x="850" y="26" fill="#0369a1" font-size="14" font-weight="900">PRAMAAN</text>
+      <rect x="1055" y="10" width="150" height="22" rx="11" fill="#0284c7"/>
+      <text x="1130" y="25" fill="#ffffff" font-size="10" font-weight="800" text-anchor="middle">Authorization &amp; Audit</text>
+
+      <g transform="translate(850, 60)" font-size="12" fill="#0f172a">
+        <text x="0" y="18" font-weight="900" fill="#0369a1">Core Innovation:</text>
+        <text x="0" y="38" font-weight="700" fill="#0f172a">• Point-in-time authorization and audit</text>
+        <text x="0" y="58" font-weight="700" fill="#0f172a">• On-chain dual-custody approval</text>
+        
+        <text x="0" y="102" font-weight="800" fill="#0369a1">What It Delivers:</text>
+        <text x="0" y="124" font-weight="700" fill="#0369a1">✔ Verifies whether a valid permission</text>
+        <text x="0" y="142" font-weight="700" fill="#0369a1">  existed at a historical timestamp,</text>
+        <text x="0" y="160" font-weight="700" fill="#0369a1">  with two-officer approval for classified data.</text>
+      </g>
+    </g>
+  </g>
+</svg>

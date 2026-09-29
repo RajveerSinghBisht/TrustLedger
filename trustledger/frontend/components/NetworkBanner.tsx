@@ -6,16 +6,12 @@ import { useState } from "react";
 import { Spinner } from "@/components/ui";
 
 export function NetworkBanner() {
-  const { isOnHardhat, checkNetwork, error, clearError } = useAuth();
+  const { isOnHardhat, checkNetwork, error, clearError, token } = useAuth();
   const [switching, setSwitching] = useState(false);
   const [switchError, setSwitchError] = useState<string | null>(null);
 
   if (!hasMetaMask()) {
-    return (
-      <div className="bg-(--warning-bg) border-b border-(--warning-border) px-4 py-2 text-sm text-(--warning)">
-        MetaMask was not detected (<code>window.ethereum</code> is undefined). Install the MetaMask browser extension to use this app — nothing here can be faked without a real wallet.
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -36,11 +32,12 @@ export function NetworkBanner() {
         </div>
       )}
 
-      {isOnHardhat === false && !error && (
-        <div className="bg-(--warning-bg) border-b border-(--warning-border) px-4 py-2 text-sm text-(--warning) flex items-center justify-between gap-4">
-          <span>
-            MetaMask is not on the local Hardhat network (<code>http://127.0.0.1:8545</code>, chain ID 31337). Nothing will work until it is — including signing and every contract-backed endpoint.
-          </span>
+      {token && isOnHardhat === false && !error && (
+        <div className="bg-slate-900 border-b border-cyan-500/30 px-4 py-2 text-xs font-mono text-slate-300 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-cyan-400 font-bold shrink-0">⚡ CLOUD SHOWCASE:</span>
+            <span>MetaMask connected to external network. On-chain defense transactions execute against local air-gapped node (31337) during live jury demonstration.</span>
+          </div>
           <button
             onClick={async () => {
               setSwitching(true);
@@ -57,17 +54,12 @@ export function NetworkBanner() {
               }
             }}
             disabled={switching}
-            className="shrink-0 inline-flex items-center gap-1.5 rounded border border-(--warning-border) bg-(--surface) px-3 py-1 text-xs font-medium text-(--warning) hover:bg-(--warning-bg) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--warning) transition-colors duration-150 disabled:opacity-50"
+            className="shrink-0 inline-flex items-center gap-1.5 rounded border border-cyan-500/40 bg-cyan-950/60 px-3 py-1 text-xs font-medium text-cyan-300 hover:bg-cyan-900/60 transition-colors disabled:opacity-50"
           >
-            {switching ? (
-              <>
-                <Spinner /> Switching...
-              </>
-            ) : (
-              "Switch network"
-            )}
+            {switching && <Spinner />}
+            {switching ? "Switching..." : "Connect Local Node"}
           </button>
-          {switchError && <span className="text-(--danger) text-xs">{switchError}</span>}
+          {switchError && <span className="text-rose-400 text-xs">{switchError}</span>}
         </div>
       )}
     </>

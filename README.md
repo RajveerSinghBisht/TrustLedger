@@ -48,7 +48,7 @@
 
 **PRAMAAN** (प्रमाण — *"Proof / Testimony"*) is an immutable, zero-trust digital asset access control and temporal audit platform. Built specifically for high-integrity defence, aerospace, and mission-critical enterprise environments, PRAMAAN eliminates single points of failure in document verification.
 
-Every identity is an on-chain Decentralized Identifier (**DID**). Every sensitive technical manual, maintenance report, or spares authorization order is encrypted off-chain using **AES-256-GCM**, with its cryptographic fingerprint anchored immutably to an EVM blockchain. Access permissions are verified on-chain at block speed, producing verifiable, portable cryptographic proof bundles that any third party (military depot, auditor, or judicial court) can verify completely offline.
+Every identity is an on-chain Decentralized Identifier (**DID**). Every sensitive technical manual, maintenance report, or spares authorization order is encrypted off-chain using **AES-256-GCM**, with its cryptographic fingerprint anchored immutably to an EVM blockchain. Access permissions are verified on-chain at block speed, producing verifiable, portable cryptographic proof bundles that any third party (military depot, auditor, or judicial court) can verify independently via an EVM RPC node without relying on the PRAMAAN backend.
 
 ---
 
@@ -58,9 +58,9 @@ In long-lifecycle defence systems (such as radar arrays, avionics, and naval com
 
 1. **The Legacy Vulnerability**: Traditional Role-Based Access Control (RBAC) relies on mutable centralized relational databases. A rogue database administrator or compromised service account can alter access records or forge authorizations retrospectively without leaving a tamper-evident trace.
 2. **The Temporal Audit Problem**: Traditional systems only know *current* permissions. If an engineer legitimately accessed classified documentation in 2024, but had their clearance revoked in 2026, standard RBAC answers: *"Access denied."* It cannot mathematically prove whether the 2024 access was lawful under the exact rules active at that precise timestamp.
-3. **Air-Gapped & Third-Party Verification**: Military field depots, independent maintenance contractors, and judicial bodies often operate with air-gapped networks. They need a way to verify access legitimacy without connecting to or trusting the vendor's live database.
+3. **Third-Party & Vendor-Independent Verification**: Military field depots, independent maintenance contractors, and judicial bodies need a way to verify access legitimacy without connecting to or trusting the vendor's live central database.
 
-**PRAMAAN solves all three challenges.**
+**PRAMAAN directly addresses these requirements** by providing immutable on-chain temporal proofs, dual-custody multi-officer consensus, and platform-independent online verification via external EVM RPC (with fully air-gapped Level 3 Merkle checkpointing established as the architectural roadmap).
 
 ---
 
@@ -77,11 +77,14 @@ Every authorized asset download emits a self-contained cryptographic proof packa
 - Requester DID & Public Key
 - Active Policy Version on-chain at time of access
 - Cryptographic signature from the PRAMAAN Protocol Authority
-- EVM Block Header & Merkle Inclusion Receipt
+- EVM Block Header & Transaction Receipt
 
-*Any auditor holding this bundle can verify its authenticity completely offline via the `/verify` portal without connecting to the PRAMAAN backend.*
+*Any auditor holding this bundle can verify its authenticity independently online via the `/verify` portal or directly against an EVM RPC node without connecting to the PRAMAAN backend.*
 
-### 3. Separation of Concerns (On-Chain Truth vs. Off-Chain Confidentiality)
+### 3. Dual-Custody Multi-Officer Authorization (Two-Man Rule)
+For sensitive assets classified as `CONFIDENTIAL`, single-signature permission grants are prohibited. `AccessControl.sol` implements an on-chain Maker-Checker workflow: Officer 1 requests permission, generating a 24-hour time-to-live (`expiresAt`). Officer 2 must approve the request on-chain, with strict enforcement of non-self-approval (`msg.sender != requester`).
+
+### 4. Separation of Concerns (On-Chain Truth vs. Off-Chain Confidentiality)
 - **On-Chain**: Identity registration, role assignments, immutable policy bounds, access log hashes, and temporal timestamps.
 - **Off-Chain**: Heavy document files, encrypted via AES-256-GCM with Ephemeral Key Derivation. No classified document payload ever touches the public blockchain.
 
@@ -244,9 +247,9 @@ IdentityRegistry.sol ──> AccessControl.sol ──> AssetRegistry.sol
 
 | Contract | Purpose | Core Functions / Events |
 | :--- | :--- | :--- |
-| **`IdentityRegistry.sol`** | Manages DIDs, roles (`ADMIN`, `MANAGER`, `AUDITOR`, `USER`), and public keys. | `registerIdentity()`, `revokeIdentity()`, `getIdentity()`, `hasRole()` |
-| **`AccessControl.sol`** | Enforces versioned temporal RBAC policies and validity timestamps. | `grantAccess()`, `revokeAccess()`, `isValid()`, `getPolicyAtTime()` |
-| **`AssetRegistry.sol`** | Immutable register of encrypted document digests and ownership. | `registerAsset()`, `transferAsset()`, `logAccessEvent()`, `getAsset()` |
+| **`IdentityRegistry.sol`** | Manages DIDs, roles (`ADMIN`, `MANAGER`, `AUDITOR`, `USER`), and public keys. | `registerIdentity()`, `revokeIdentity()`, `resolveDID()`, `getIdentity()`, `isActive()`, `getRole()` |
+| **`AccessControl.sol`** | Enforces versioned temporal RBAC policies, dual-custody authorization, and tamper-evident access logging. | `setPermission()`, `requestPermission()`, `approvePermission()`, `cancelPermissionRequest()`, `checkPermissionNow()`, `checkPermissionAtTime()`, `recordAccess()` |
+| **`AssetRegistry.sol`** | ERC-721 tokenized digital asset records with on-chain digests and ownership transfers. | `registerAsset()`, `transferAsset()`, `updateAssetVersion()`, `getAsset()` |
 
 ---
 
@@ -255,7 +258,7 @@ IdentityRegistry.sol ──> AccessControl.sol ──> AssetRegistry.sol
 - **Document Encryption**: Off-chain symmetric encryption with **AES-256-GCM** (Galois/Counter Mode), guaranteeing both confidentiality and ciphertext integrity.
 - **Content Hashing**: Cryptographic document fingerprinting with **SHA-256**.
 - **Wallet Authentication**: **EIP-712** typed structured data signing. Users sign domain-bound challenge payloads with MetaMask/Coinbase Wallet — no plaintext passwords.
-- **Audit Verifier**: Public verification endpoint (`/verify`) decrypts and audits proof bundles client-side against the on-chain Merkle root.
+- **Audit Verifier**: Public verification portal (`/verify`) re-derives proof bundle integrity and validates on-chain transaction status directly against an EVM RPC node.
 
 ---
 

@@ -113,7 +113,7 @@
   <text x="75" y="440" fill="#94a3b8" font-family="system-ui, monospace" font-size="11">• /api/identities (Register &amp; Lookup)</text>
   <text x="75" y="462" fill="#94a3b8" font-family="system-ui, monospace" font-size="11">• /api/assets (Upload &amp; Download)</text>
   <text x="75" y="484" fill="#94a3b8" font-family="system-ui, monospace" font-size="11">• /api/permissions (RBAC &amp; Policy Verify)</text>
-  <text x="75" y="506" fill="#94a3b8" font-family="system-ui, monospace" font-size="11">• /api/proof-bundles (Offline Verifier)</text>
+  <text x="75" y="506" fill="#94a3b8" font-family="system-ui, monospace" font-size="11">• /api/proof-bundles (Independent Verifier)</text>
 
   <rect x="420" y="370" width="370" height="164" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
   <text x="435" y="394" fill="#34d399" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Core Engines &amp; Cryptography</text>

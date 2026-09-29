@@ -584,4 +584,461 @@ describe("AccessControl", function () {
       ).to.be.revertedWith("AccessControl: caller is not an active identity");
     });
   });
+
+  // ── Dual-Custody (Two-Man Rule) Tests ──────────────────────────────
+  //
+  // These tests require the full three-contract stack because
+  // requestPermission() queries AssetRegistry for asset classification.
+
+  const Classification = {
+    PUBLIC: 0,
+    INTERNAL: 1,
+    CONFIDENTIAL: 2,
+  };
+
+  async function deployWithAssetRegistryFixture() {
+    const [deployer, manager1, manager2, user1, user2, outsider] =
+      await ethers.getSigners();
+
+    const IdentityRegistry = await ethers.getContractFactory(
+      "IdentityRegistry"
+    );
+    const identityRegistry = await IdentityRegistry.deploy(
+      BOOTSTRAP_DID,
+      BOOTSTRAP_PUBKEY
+    );
+    await identityRegistry.waitForDeployment();
+
+    const AccessControl = await ethers.getContractFactory("AccessControl");
+    const accessControl = await AccessControl.deploy(
+      await identityRegistry.getAddress()
+    );
+    await accessControl.waitForDeployment();
+
+    const AssetRegistry = await ethers.getContractFactory("AssetRegistry");
+    const assetRegistry = await AssetRegistry.deploy(
+      await identityRegistry.getAddress(),
+      await accessControl.getAddress()
+    );
+    await assetRegistry.waitForDeployment();
+
+    // Wire AccessControl → AssetRegistry (one-shot initializer)
+    await accessControl
+      .connect(deployer)
+      .setAssetRegistry(await assetRegistry.getAddress());
+
+    // Register manager1 as MANAGER
+    await identityRegistry
+      .connect(deployer)
+      .registerIdentity(
+        manager1.address,
+        "did:trustledger:manager1",
+        "0xabcd",
+        Role.MANAGER
+      );
+
+    // Register manager2 as MANAGER (Officer 2 for dual-custody)
+    await identityRegistry
+      .connect(deployer)
+      .registerIdentity(
+        manager2.address,
+        "did:trustledger:manager2",
+        "0xdead",
+        Role.MANAGER
+      );
+
+    // Register user1 as USER (the subject whose access we'll test)
+    await identityRegistry
+      .connect(deployer)
+      .registerIdentity(
+        user1.address,
+        "did:trustledger:user1",
+        "0xbeef",
+        Role.USER
+      );
+
+    // Register a CONFIDENTIAL asset (assetId = 1)
+    const confidentialHash = ethers.keccak256(
+      ethers.toUtf8Bytes("classified-radar-manual-v1")
+    );
+    await assetRegistry
+      .connect(deployer)
+      .registerAsset(
+        confidentialHash,
+        BOOTSTRAP_DID,
+        "ipfs://classified",
+        Classification.CONFIDENTIAL
+      );
+
+    // Register a PUBLIC asset (assetId = 2)
+    const publicHash = ethers.keccak256(
+      ethers.toUtf8Bytes("public-maintenance-log-v1")
+    );
+    await assetRegistry
+      .connect(deployer)
+      .registerAsset(
+        publicHash,
+        BOOTSTRAP_DID,
+        "ipfs://public",
+        Classification.PUBLIC
+      );
+
+    return {
+      identityRegistry,
+      accessControl,
+      assetRegistry,
+      deployer,
+      manager1,
+      manager2,
+      user1,
+      user2,
+      outsider,
+      confidentialAssetId: 1,
+      publicAssetId: 2,
+    };
+  }
+
+  describe("setAssetRegistry — one-shot initializer", function () {
+    it("can be called once by the deployer", async function () {
+      const { accessControl, assetRegistry } =
+        await deployWithAssetRegistryFixture();
+
+      // Already set in the fixture — confirm it's set
+      expect(await accessControl.getAssetRegistryAddress()).to.equal(
+        await assetRegistry.getAddress()
+      );
+    });
+
+    it("reverts if called a second time (one-shot invariant)", async function () {
+      const { accessControl, deployer } =
+        await deployWithAssetRegistryFixture();
+
+      // Already set in fixture — attempting a second set must revert
+      await expect(
+        accessControl
+          .connect(deployer)
+          .setAssetRegistry(ethers.ZeroAddress.replace(/0$/, "1"))
+      ).to.be.revertedWith("AccessControl: AssetRegistry already set");
+    });
+
+    it("reverts if called by a non-deployer", async function () {
+      // Deploy fresh contracts WITHOUT calling setAssetRegistry
+      const [deployer, nonDeployer] = await ethers.getSigners();
+
+      const IdentityRegistry = await ethers.getContractFactory(
+        "IdentityRegistry"
+      );
+      const identityRegistry = await IdentityRegistry.deploy(
+        BOOTSTRAP_DID,
+        BOOTSTRAP_PUBKEY
+      );
+      await identityRegistry.waitForDeployment();
+
+      const AccessControl = await ethers.getContractFactory("AccessControl");
+      const accessControl = await AccessControl.deploy(
+        await identityRegistry.getAddress()
+      );
+      await accessControl.waitForDeployment();
+
+      await expect(
+        accessControl
+          .connect(nonDeployer)
+          .setAssetRegistry(ethers.ZeroAddress.replace(/0$/, "1"))
+      ).to.be.revertedWith(
+        "AccessControl: only deployer can set AssetRegistry"
+      );
+    });
+  });
+
+  describe("requestPermission — classification-based routing", function () {
+    it("creates a PENDING request for a CONFIDENTIAL asset (does NOT grant immediately)", async function () {
+      const { accessControl, manager1, confidentialAssetId } =
+        await deployWithAssetRegistryFixture();
+
+      await expect(
+        accessControl
+          .connect(manager1)
+          .requestPermission(
+            confidentialAssetId,
+            "did:trustledger:user1",
+            Action.READ,
+            PermissionState.GRANTED
+          )
+      )
+        .to.emit(accessControl, "PermissionRequested")
+        .withArgs(
+          1, // requestId
+          confidentialAssetId,
+          "did:trustledger:user1",
+          Action.READ,
+          PermissionState.GRANTED,
+          manager1.address,
+          anyValue // expiresAt
+        );
+
+      // Permission should NOT be active yet — it's pending
+      expect(
+        await accessControl.checkPermissionNow(
+          confidentialAssetId,
+          "did:trustledger:user1",
+          Action.READ
+        )
+      ).to.equal(false);
+
+      // The request should be retrievable
+      const request = await accessControl.getPermissionRequest(1);
+      expect(request.assetId).to.equal(confidentialAssetId);
+      expect(request.approved).to.equal(false);
+      expect(request.cancelled).to.equal(false);
+    });
+
+    it("grants immediately (single-sig) for a PUBLIC asset", async function () {
+      const { accessControl, manager1, publicAssetId } =
+        await deployWithAssetRegistryFixture();
+
+      await accessControl
+        .connect(manager1)
+        .requestPermission(
+          publicAssetId,
+          "did:trustledger:user1",
+          Action.READ,
+          PermissionState.GRANTED
+        );
+
+      // Permission should be active immediately — no pending state
+      expect(
+        await accessControl.checkPermissionNow(
+          publicAssetId,
+          "did:trustledger:user1",
+          Action.READ
+        )
+      ).to.equal(true);
+    });
+  });
+
+  describe("approvePermission — dual-custody enforcement", function () {
+    it("CRITICAL: rejects self-approval (Officer 1 cannot approve their own request)", async function () {
+      const { accessControl, manager1, confidentialAssetId } =
+        await deployWithAssetRegistryFixture();
+
+      await accessControl
+        .connect(manager1)
+        .requestPermission(
+          confidentialAssetId,
+          "did:trustledger:user1",
+          Action.READ,
+          PermissionState.GRANTED
+        );
+
+      await expect(
+        accessControl.connect(manager1).approvePermission(1)
+      ).to.be.revertedWith(
+        "AccessControl: cannot approve own request (dual-custody violation)"
+      );
+    });
+
+    it("succeeds when a DIFFERENT active ADMIN/MANAGER approves", async function () {
+      const { accessControl, manager1, manager2, confidentialAssetId } =
+        await deployWithAssetRegistryFixture();
+
+      // Officer 1 (manager1) creates the request
+      await accessControl
+        .connect(manager1)
+        .requestPermission(
+          confidentialAssetId,
+          "did:trustledger:user1",
+          Action.READ,
+          PermissionState.GRANTED
+        );
+
+      // Officer 2 (manager2) approves
+      await expect(accessControl.connect(manager2).approvePermission(1))
+        .to.emit(accessControl, "PermissionApproved")
+        .withArgs(1, manager2.address);
+
+      // NOW the permission should be active
+      expect(
+        await accessControl.checkPermissionNow(
+          confidentialAssetId,
+          "did:trustledger:user1",
+          Action.READ
+        )
+      ).to.equal(true);
+
+      // The request should be marked as approved
+      const request = await accessControl.getPermissionRequest(1);
+      expect(request.approved).to.equal(true);
+    });
+
+    it("rejects approval after the 24-hour TTL has expired", async function () {
+      const { accessControl, manager1, manager2, confidentialAssetId } =
+        await deployWithAssetRegistryFixture();
+
+      await accessControl
+        .connect(manager1)
+        .requestPermission(
+          confidentialAssetId,
+          "did:trustledger:user1",
+          Action.READ,
+          PermissionState.GRANTED
+        );
+
+      // Fast-forward past the 24-hour TTL
+      await time.increase(24 * 60 * 60 + 1);
+
+      await expect(
+        accessControl.connect(manager2).approvePermission(1)
+      ).to.be.revertedWith("AccessControl: request has expired");
+    });
+
+    it("the approved permission integrates into the versioned timeline and is queryable via checkPermissionAtTime", async function () {
+      const { accessControl, manager1, manager2, confidentialAssetId } =
+        await deployWithAssetRegistryFixture();
+
+      await accessControl
+        .connect(manager1)
+        .requestPermission(
+          confidentialAssetId,
+          "did:trustledger:user1",
+          Action.READ,
+          PermissionState.GRANTED
+        );
+
+      await accessControl.connect(manager2).approvePermission(1);
+
+      const approvalTime = await time.latest();
+
+      // The temporal verification USP must work with dual-custody
+      // approved permissions identically to single-sig permissions
+      const atApprovalTime = await accessControl.checkPermissionAtTime(
+        confidentialAssetId,
+        "did:trustledger:user1",
+        Action.READ,
+        approvalTime
+      );
+      expect(atApprovalTime.state).to.equal(PermissionState.GRANTED);
+      // grantedBy should be the APPROVER (Officer 2), not the requester
+      expect(atApprovalTime.grantedBy).to.equal("did:trustledger:manager2");
+    });
+
+    it("rejects approval from a revoked officer", async function () {
+      const {
+        accessControl,
+        identityRegistry,
+        deployer,
+        manager1,
+        manager2,
+        confidentialAssetId,
+      } = await deployWithAssetRegistryFixture();
+
+      await accessControl
+        .connect(manager1)
+        .requestPermission(
+          confidentialAssetId,
+          "did:trustledger:user1",
+          Action.READ,
+          PermissionState.GRANTED
+        );
+
+      // Deployer (admin) revokes manager2 before they can approve
+      await identityRegistry.connect(deployer).revokeIdentity(manager2.address);
+
+      await expect(
+        accessControl.connect(manager2).approvePermission(1)
+      ).to.be.revertedWith("AccessControl: caller is not an active identity");
+    });
+
+    it("CRITICAL: self-approval reverts when the requester is a real officer address, not a relayer", async function () {
+      const { accessControl, manager1, confidentialAssetId } =
+        await deployWithAssetRegistryFixture();
+
+      // Real officer 1 requests access directly
+      await accessControl
+        .connect(manager1)
+        .requestPermission(
+          confidentialAssetId,
+          "did:trustledger:user1",
+          Action.READ,
+          PermissionState.GRANTED
+        );
+
+      const request = await accessControl.getPermissionRequest(1);
+      // Verify requester on-chain is manager1's real address
+      expect(request.requester).to.equal(manager1.address);
+
+      // Attempt self-approval from the same officer
+      await expect(
+        accessControl.connect(manager1).approvePermission(1)
+      ).to.be.revertedWith(
+        "AccessControl: cannot approve own request (dual-custody violation)"
+      );
+    });
+  });
+
+  describe("cancelPermissionRequest", function () {
+    it("allows the original requester to cancel", async function () {
+      const { accessControl, manager1, confidentialAssetId } =
+        await deployWithAssetRegistryFixture();
+
+      await accessControl
+        .connect(manager1)
+        .requestPermission(
+          confidentialAssetId,
+          "did:trustledger:user1",
+          Action.READ,
+          PermissionState.GRANTED
+        );
+
+      await expect(
+        accessControl.connect(manager1).cancelPermissionRequest(1)
+      )
+        .to.emit(accessControl, "PermissionRequestCancelled")
+        .withArgs(1, manager1.address);
+
+      const request = await accessControl.getPermissionRequest(1);
+      expect(request.cancelled).to.equal(true);
+    });
+
+    it("allows an active ADMIN (not the requester) to cancel", async function () {
+      const { accessControl, deployer, manager1, confidentialAssetId } =
+        await deployWithAssetRegistryFixture();
+
+      await accessControl
+        .connect(manager1)
+        .requestPermission(
+          confidentialAssetId,
+          "did:trustledger:user1",
+          Action.READ,
+          PermissionState.GRANTED
+        );
+
+      // deployer is ADMIN, not the requester
+      await expect(
+        accessControl.connect(deployer).cancelPermissionRequest(1)
+      )
+        .to.emit(accessControl, "PermissionRequestCancelled")
+        .withArgs(1, deployer.address);
+    });
+
+    it("rejects cancellation from an outsider who is neither requester nor ADMIN", async function () {
+      const { accessControl, manager1, user1, confidentialAssetId } =
+        await deployWithAssetRegistryFixture();
+
+      await accessControl
+        .connect(manager1)
+        .requestPermission(
+          confidentialAssetId,
+          "did:trustledger:user1",
+          Action.READ,
+          PermissionState.GRANTED
+        );
+
+      // user1 is a registered USER (not ADMIN, not the requester)
+      await expect(
+        accessControl.connect(user1).cancelPermissionRequest(1)
+      ).to.be.revertedWith(
+        "AccessControl: only requester or ADMIN can cancel"
+      );
+    });
+  });
 });

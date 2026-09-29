@@ -85,6 +85,30 @@ async function start(): Promise<void> {
 
   app.use("/api/proof-bundles", createProofBundlesRouter());
 
+  // -----------------------------------------------------------------------
+  // Global Express Error Handler
+  // Prevents internal stack traces, database details, or file paths from
+  // leaking to clients in production.
+  // -----------------------------------------------------------------------
+  app.use(
+    (
+      err: any,
+      _req: express.Request,
+      res: express.Response,
+      _next: express.NextFunction
+    ) => {
+      const statusCode = typeof err?.status === "number" ? err.status : 500;
+      const response: Record<string, unknown> = {
+        error: statusCode === 400 ? "Bad Request" : "Internal server error",
+        code: err?.code || (statusCode === 400 ? "BAD_REQUEST" : "INTERNAL_ERROR"),
+      };
+      if (process.env.NODE_ENV === "development" && err?.message) {
+        response.details = err.message;
+      }
+      return res.status(statusCode).json(response);
+    }
+  );
+
   const server = app.listen(config.port, () => {
     console.log(`PRAMAAN backend listening on port ${config.port}`);
   });

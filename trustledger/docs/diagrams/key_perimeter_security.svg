@@ -56,7 +56,7 @@
       <text x="14" y="104" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Signs <tspan font-family="monospace">X-Proof-Bundle</tspan></text>
       <text x="14" y="122" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Protocol Authority Signature</text>
       <text x="14" y="140" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Standalone Third-Party Proof</text>
-      <text x="14" y="158" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Offline Verifier Trust Anchor</text>
+      <text x="14" y="158" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">• Independent Verifier Trust Anchor</text>
       <rect x="14" y="180" width="212" height="34" rx="4" fill="#172554"/>
       <text x="120" y="201" fill="#93c5fd" font-family="system-ui, sans-serif" font-size="10" font-weight="600" text-anchor="middle">Must Never Touch On-Chain Gas</text>
     </g>

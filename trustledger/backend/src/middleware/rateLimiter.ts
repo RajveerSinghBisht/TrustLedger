@@ -57,11 +57,6 @@ export const globalLimiter = rateLimit({
   standardHeaders: true, // Return RateLimit-* headers (draft-6)
   legacyHeaders: false, // Disable X-RateLimit-* headers
   handler: rateLimitHandler,
-  // OWASP: use the leftmost non-private IP from X-Forwarded-For when
-  // behind a reverse proxy. Express 5's trust-proxy setting controls
-  // whether req.ip reflects this; if not behind a proxy, req.ip is the
-  // direct client IP, which is correct.
-  keyGenerator: (req: Request) => req.ip ?? "unknown",
 });
 
 // ---------------------------------------------------------------------------
@@ -76,7 +71,6 @@ export const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitHandler,
-  keyGenerator: (req: Request) => req.ip ?? "unknown",
 });
 
 // ---------------------------------------------------------------------------
@@ -91,7 +85,6 @@ export const publicReadLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitHandler,
-  keyGenerator: (req: Request) => req.ip ?? "unknown",
 });
 
 // ---------------------------------------------------------------------------
@@ -106,7 +99,6 @@ export const publicVerifyLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitHandler,
-  keyGenerator: (req: Request) => req.ip ?? "unknown",
 });
 
 // ---------------------------------------------------------------------------
@@ -126,6 +118,7 @@ export const authenticatedWriteLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitHandler,
+  validate: { keyGeneratorIpFallback: false },
   keyGenerator: (req: Request) => {
     // After authenticateJWT, req.auth.did is always set for
     // authenticated requests. Fall back to IP if somehow missing

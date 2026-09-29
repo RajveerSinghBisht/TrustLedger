@@ -65,6 +65,54 @@ export interface SetPermissionResponse {
   txHash: string;
 }
 
+export type PermissionRequestStatus = "PENDING" | "APPROVED" | "CANCELLED" | "EXPIRED";
+
+export interface PermissionRequestRecord {
+  requestId: number;
+  assetId: number;
+  subjectDID: string;
+  action: PermissionAction;
+  requestedState: PermissionState;
+  requester: string;
+  requestedAt: number;
+  expiresAt: number;
+  approved: boolean;
+  cancelled: boolean;
+  status: PermissionRequestStatus;
+}
+
+export type RequestPermissionResponse =
+  | {
+      isDualCustody: true;
+      requestId: number;
+      assetId: number;
+      subjectDID: string;
+      action: PermissionAction;
+      requestedState: PermissionState;
+      requester: string;
+      expiresAt: number;
+      txHash: string;
+    }
+  | {
+      isDualCustody: false;
+      permissionId: number;
+      validFrom: number;
+      txHash: string;
+    };
+
+export interface ApprovePermissionResponse {
+  requestId: number;
+  permissionId: number;
+  validFrom: number;
+  txHash: string;
+}
+
+export interface CancelPermissionResponse {
+  requestId: number;
+  cancelledBy: string;
+  txHash: string;
+}
+
 export interface PermissionVersion {
   permissionId: number;
   state: PermissionState;

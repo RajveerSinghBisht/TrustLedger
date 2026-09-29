@@ -62,7 +62,7 @@ export function AsciiWaveField({ className = "w-full h-full" }: AsciiWaveFieldPr
         (!document.documentElement.getAttribute("data-theme") &&
           window.matchMedia("(prefers-color-scheme: dark)").matches);
 
-      const baseColor = isDark ? "250, 250, 249" : "20, 17, 15";
+      const baseColor = isDark ? "56, 189, 248" : "15, 23, 42";
 
       // Grid spacing for wave simulation
       const cell = 24;

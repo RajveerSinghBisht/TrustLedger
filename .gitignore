@@ -69,13 +69,18 @@ backend/dist/
 !**/.env.example
 !**/*.env.example
 
-# Credentials & Certificates
+# Credentials, Certificates & Wallet Keystores
 *.pem
 *.key
 *.cert
 *.crt
 *.pfx
 *.p12
+*.p8
+keystore/
+**/keystore/
+*keystore*.json
+UTC--*
 
 # ------------------------------------------------------------------------------
 # Testing & Code Coverage

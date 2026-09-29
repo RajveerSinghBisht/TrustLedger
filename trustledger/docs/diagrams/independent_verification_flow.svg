@@ -22,7 +22,7 @@
   <rect x="40" y="20" width="1020" height="54" rx="8" fill="#111827" stroke="#1f2937" stroke-width="1"/>
   <circle cx="68" cy="47" r="10" fill="#10b981" opacity="0.2"/>
   <circle cx="68" cy="47" r="5" fill="#10b981"/>
-  <text x="90" y="52" fill="#f8fafc" font-family="system-ui, sans-serif" font-size="16" font-weight="700">Flow 6: Independent Third-Party Proof Bundle Verification (Level 2 Offline/Decentralized)</text>
+  <text x="90" y="52" fill="#f8fafc" font-family="system-ui, sans-serif" font-size="16" font-weight="700">Flow 6: Independent Third-Party Proof Bundle Verification (Level 2 Platform-Independent / RPC)</text>
   <rect x="880" y="34" width="160" height="26" rx="13" fill="#064e3b"/>
   <text x="960" y="51" fill="#6ee7b7" font-family="system-ui, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Zero Vendor Trust</text>
 
@@ -60,7 +60,7 @@
     <!-- Action -->
     <rect x="16" y="430" width="328" height="96" rx="6" fill="#141e2e" stroke="#1e3a5f" stroke-width="1"/>
     <text x="28" y="455" fill="#38bdf8" font-family="system-ui, sans-serif" font-size="11" font-weight="700">Paste into Standalone Verifier:</text>
-    <text x="28" y="475" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">Via <tspan fill="#e2e8f0">/verify</tspan> portal or offline CLI script.</text>
+    <text x="28" y="475" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">Via <tspan fill="#e2e8f0">/verify</tspan> portal or standalone CLI script (RPC connected).</text>
     <text x="28" y="495" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">Connects to ANY public or private EVM node.</text>
     <text x="28" y="513" fill="#64748b" font-family="system-ui, sans-serif" font-size="9">Requires NO login or API credentials.</text>
   </g>

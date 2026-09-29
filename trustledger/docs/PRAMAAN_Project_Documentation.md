@@ -137,7 +137,7 @@ Verification happens at three levels:
 | Framework | Hardhat | ^2.22.0 | Compilation, testing, local chain |
 | EVM Target | Cancun | — | Required for OpenZeppelin 5.x's `mcopy` opcode |
 | NFT Standard | OpenZeppelin ERC-721 | ^5.0.0 | Asset tokenization |
-| Testing | Hardhat Toolbox (Mocha + Chai) | ^5.0.0 | 56 passing tests across 3 contracts |
+| Testing | Hardhat Toolbox (Mocha + Chai) | ^5.0.0 | 68 passing tests across 3 contracts |
 | Network | Local Hardhat Node | — | `http://127.0.0.1:8545` (Chain ID 31337) |
 
 #### Backend
@@ -325,11 +325,19 @@ Three Solidity contracts, kept separate by design:
 | Function | Access | Description |
 |---|---|---|
 | `setPermission()` | Active ADMIN or MANAGER | Appends a new permission record. Closes the previous current record. `grantedBy` is derived from `msg.sender`'s DID, never caller-supplied. |
+| `requestPermission()` | Active ADMIN or MANAGER | Classification-aware router: immediate single-sig for PUBLIC/INTERNAL assets; routes CONFIDENTIAL assets into PENDING dual-custody request with 24h TTL. |
+| `approvePermission()` | Active ADMIN or MANAGER | Officer 2 dual-custody approval. Enforces `msg.sender != requester` (non-self-approval) and 24h TTL before appending permission to versioned timeline. |
+| `cancelPermissionRequest()` | Requester or ADMIN | Cancels a pending dual-custody request prior to approval or expiration. |
 | `checkPermissionAtTime()` | Public (view) | **THE CORE USP.** Linear scan to find the record where `validFrom ≤ T < validUntil`. Returns REVOKED as safe default if no record found. Does **not** check current identity status (by design — revocation should not retroactively rewrite history). |
 | `checkPermissionNow()` | Public (view) | Current-time convenience wrapper. Unlike `checkPermissionAtTime`, this **also** checks `isActive()` on the subject's identity. A revoked identity is denied immediately. |
 | `recordAccess()` | Active identity | Independently re-verifies authorization before emitting `AssetAccessed`. Cannot be called to manufacture fake access events. |
+| `setAssetRegistry()` | Deployer Only | One-shot initializer linking AssetRegistry for classification checks without circular deployment. |
 
-**Events:** `PermissionChanged`, `AssetAccessed`
+**Dual-Custody Struct & Enums:**
+- `RequestStatus`: `PENDING`, `APPROVED`, `CANCELLED`, `EXPIRED`
+- `PermissionRequest`: `{ requestId, assetId, subjectDID, action, requestedState, requester, approver, createdAt, expiresAt, status }`
+
+**Events:** `PermissionChanged`, `PermissionRequested`, `PermissionApproved`, `PermissionRequestCancelled`, `AssetAccessed`
 
 **Two Distinct Authorization Modes:**
 
@@ -365,12 +373,12 @@ checkPermissionAtTime: Permission State ONLY (historical, no retroactive revocat
 
 ### 6.4 Testing
 
-**56 total tests passing** across all three contracts:
+**68 total tests passing** across all three contracts:
 
 | Contract | Tests | Key Scenarios |
 |---|---|---|
 | IdentityRegistry | 20 | Registration, revocation, DID uniqueness, non-admin rejection |
-| AccessControl | 19 | Permission grant/revoke, **historical verification** (before + after changes), revoked identity denied, TOCTOU safety |
+| AccessControl | 31 | Permission grant/revoke, **historical verification** (before + after changes), revoked identity denied, TOCTOU safety, dual-custody maker-checker consensus, non-self-approval, 24h TTL expiry |
 | AssetRegistry | 17 | Asset registration, transfer authorization, ownership consistency (`ownerOf` matches `ownerDID`), version updates |
 
 ---
@@ -907,26 +915,30 @@ Currently running on a **local Hardhat node** for development and demonstration.
 | Test File | Tests | Coverage |
 |---|---|---|
 | `IdentityRegistry.test.js` | 20 | Registration, revocation, DID uniqueness, role checks, bootstrap admin |
-| `AccessControl.test.js` | 19 | Permission versioning, historical verification, revoked identity blocking, TOCTOU |
+| `AccessControl.test.js` | 31 | Permission versioning, historical verification, revoked identity blocking, TOCTOU, dual-custody maker-checker flow, non-self-approval, 24h TTL, cancellation |
 | `AssetRegistry.test.js` | 17 | Minting, transfer authorization, ownership consistency, version updates |
-| **Total** | **56** | All passing ✅ |
+| **Total** | **68** | All passing ✅ |
 
 **Key test scenarios that prove the USPs:**
 - Setting a permission, changing it, then confirming `checkPermissionAtTime` returns the correct historical state for timestamps **before and after** the change
 - Revoking an identity, confirming `checkPermissionNow` returns false **even with** a GRANTED permission record
 - Confirming `checkPermissionAtTime` for a pre-revocation timestamp **still** returns the permission as it was (no retroactive history rewriting)
+- Enforcing Maker-Checker separation: Officer 1 cannot approve their own dual-custody request; approval after 24h TTL reverts automatically
 
 ### 14.2 Backend Tests
 
 **Framework:** Jest + Supertest + ts-jest
 
+**Suite Status:** **75 passing tests across 7 test suites**
+
 Backend testing covers:
-- Auth service unit tests (challenge generation, verification flow, edge cases)
+- Auth service unit tests (challenge generation, EIP-712 verification flow, replay defense)
 - Authorization service unit tests (role checking, revoked identity rejection)
-- Middleware tests (JWT validation, input validation)
-- Route integration tests
-- Proof bundle generation and verification
-- Document encryption round-trip
+- Access control integration tests (dual-custody request creation, Officer 2 approval, cancellation, and validation)
+- Middleware tests (JWT validation, OWASP input validation schemas, rate-limiting)
+- Route integration tests across all identity, asset, and permission endpoints
+- Proof bundle generation and independent online verification (EIP-191 message recovery and on-chain RPC checks)
+- Two-tier envelope encryption/decryption round-trip (AES-256-GCM)
 
 ---
 
@@ -1025,8 +1037,9 @@ Backend testing covers:
 
 | Metric | Value |
 |---|---|
-| Smart contract tests passing | 56 |
-| API endpoints implemented | 9 |
+| Smart contract tests passing | 68 |
+| Backend tests passing | 75 (across 7 test suites) |
+| API endpoints implemented | 13 |
 | Smart contracts deployed | 3 |
 | Encryption algorithm | AES-256-GCM (NIST standard) |
 | JWT session lifetime | 15 minutes |
@@ -1060,8 +1073,8 @@ Backend testing covers:
 
 These are features explicitly documented as future work across the project specs, scoped as maturity progression rather than incompleteness:
 
-### Threshold / Multisig Authorization
-For high-risk operations (e.g., revoking access to classified material), require multiple authorized signatures rather than a single Admin. Protects against a single compromised or rogue insider.
+### Threshold / M-of-N Cryptographic Signing
+While **Dual-Custody Multi-Officer Authorization (Two-Man Rule)** is fully operational on-chain in `AccessControl.sol` for classified assets, decentralized threshold cryptography schemes (e.g., FROST or Shamir secret sharing for distributed master keys) remain future research.
 
 ### Physical Component-Level Provenance Tracking
 Extending beyond document/record trust to actual hardware part tracking through a supply chain. Explicitly deferred because it requires operational data and collaboration from BEL that a hackathon team cannot access or simulate credibly.

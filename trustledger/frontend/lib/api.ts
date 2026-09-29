@@ -13,6 +13,11 @@ import type {
   PermissionState,
   Classification,
   Role,
+  PermissionRequestStatus,
+  PermissionRequestRecord,
+  RequestPermissionResponse,
+  ApprovePermissionResponse,
+  CancelPermissionResponse,
 } from "./types";
 
 // Base URL for PRAMAAN backend API. Overridable via env
@@ -224,6 +229,75 @@ export async function verifyPermissionAtTime(params: {
   });
   const res = await fetch(`${API_BASE_URL}/api/permissions/verify?${qs}`);
   return handle<VerifyPermissionResponse>(res);
+}
+
+export async function requestPermission(
+  token: string,
+  params: {
+    assetId: number;
+    subjectDID: string;
+    action: PermissionAction;
+    state?: PermissionState;
+  }
+): Promise<RequestPermissionResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/permissions/request`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders(token) },
+    body: JSON.stringify(params),
+  });
+  return handle<RequestPermissionResponse>(res);
+}
+
+export async function approvePermission(
+  token: string,
+  requestId: number
+): Promise<ApprovePermissionResponse> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/permissions/requests/${requestId}/approve`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders(token) },
+    }
+  );
+  return handle<ApprovePermissionResponse>(res);
+}
+
+export async function cancelPermissionRequest(
+  token: string,
+  requestId: number
+): Promise<CancelPermissionResponse> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/permissions/requests/${requestId}/cancel`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders(token) },
+    }
+  );
+  return handle<CancelPermissionResponse>(res);
+}
+
+export async function getPermissionRequests(
+  token: string,
+  status?: string
+): Promise<{ requests: PermissionRequestRecord[] }> {
+  const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+  const res = await fetch(`${API_BASE_URL}/api/permissions/requests${qs}`, {
+    headers: authHeaders(token),
+  });
+  return handle<{ requests: PermissionRequestRecord[] }>(res);
+}
+
+export async function getPermissionRequest(
+  token: string,
+  requestId: number
+): Promise<PermissionRequestRecord> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/permissions/requests/${requestId}`,
+    {
+      headers: authHeaders(token),
+    }
+  );
+  return handle<PermissionRequestRecord>(res);
 }
 
 // ---- Proof bundles ----

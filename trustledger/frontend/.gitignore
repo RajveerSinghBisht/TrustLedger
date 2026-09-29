@@ -24,9 +24,16 @@ next-env.d.ts.bak
 # Testing & Coverage
 /coverage
 
-# Environment files
+# Environment files & Credentials
 .env
+.env.*
 .env*.local
+!**/.env.example
+*.pem
+*.key
+keystore/
+*keystore*.json
+UTC--*
 
 # Debug logs
 npm-debug.log*

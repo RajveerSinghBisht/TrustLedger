@@ -522,3 +522,345 @@ export async function setPermissionAndDecode(
     "PermissionChanged event not found in setPermission transaction receipt"
   );
 }
+
+// ── Dual-Custody (Two-Man Rule) Service Layer ─────────────────────────
+//
+// These functions bridge the dual-custody contract functions
+// (requestPermission, approvePermission, cancelPermissionRequest,
+// getPermissionRequest) to the route and testing layers, following the
+// established patterns: QueuedRelayerWallet serialization for relayer
+// writes, optional Signer support for multi-officer co-signing, and
+// typed event decoding for structured responses.
+
+export interface PermissionRequestRecord {
+  requestId: bigint;
+  assetId: bigint;
+  subjectDID: string;
+  action: AccessAction;
+  requestedState: PermissionState;
+  requester: string;
+  requestedAt: bigint;
+  expiresAt: bigint;
+  approved: boolean;
+  cancelled: boolean;
+}
+
+export type PermissionRequestStatus = "PENDING" | "APPROVED" | "CANCELLED" | "EXPIRED";
+
+function normalizePermissionRequest(
+  raw: any
+): PermissionRequestRecord {
+  return {
+    requestId: BigInt(raw.requestId),
+    assetId: BigInt(raw.assetId),
+    subjectDID: String(raw.subjectDID),
+    action: enumToAction(Number(raw.action)),
+    requestedState: enumToState(Number(raw.requestedState)),
+    requester: String(raw.requester),
+    requestedAt: BigInt(raw.requestedAt),
+    expiresAt: BigInt(raw.expiresAt),
+    approved: Boolean(raw.approved),
+    cancelled: Boolean(raw.cancelled),
+  };
+}
+
+/**
+ * Initiates a permission grant/revoke. For CONFIDENTIAL assets, creates a
+ * dual-custody request in PENDING state requiring Officer 2 approval. For
+ * PUBLIC and INTERNAL assets, delegates directly to single-sig on-chain.
+ */
+export async function requestPermission(
+  assetId: bigint | number | string,
+  subjectDID: string,
+  action: AccessAction,
+  state: PermissionState = "GRANTED",
+  signer?: ethers.Signer
+): Promise<ethers.TransactionResponse> {
+  const contract = signer
+    ? (getReadContract().connect(signer) as ethers.Contract)
+    : getWriteContract();
+
+  const fn = contract.getFunction("requestPermission");
+  return fn(
+    assetId,
+    subjectDID,
+    actionToEnum(action),
+    stateToEnum(state)
+  );
+}
+
+export type RequestPermissionResult =
+  | {
+      isDualCustody: true;
+      requestId: bigint;
+      assetId: bigint;
+      subjectDID: string;
+      action: AccessAction;
+      requestedState: PermissionState;
+      requester: string;
+      expiresAt: bigint;
+      txHash: string;
+    }
+  | {
+      isDualCustody: false;
+      permissionId: bigint;
+      validFrom: bigint;
+      txHash: string;
+    };
+
+/**
+ * Submits requestPermission() and decodes the emitted event:
+ * - Emits PermissionRequested for CONFIDENTIAL assets (isDualCustody: true)
+ * - Emits PermissionChanged for PUBLIC/INTERNAL assets (isDualCustody: false)
+ */
+export async function requestPermissionAndDecode(
+  assetId: bigint | number | string,
+  subjectDID: string,
+  action: AccessAction,
+  state: PermissionState = "GRANTED",
+  signer?: ethers.Signer
+): Promise<RequestPermissionResult> {
+  const contract = getReadContract();
+  const tx = await requestPermission(assetId, subjectDID, action, state, signer);
+  const receipt = await tx.wait();
+
+  if (!receipt) {
+    throw new Error("requestPermission transaction did not produce a receipt");
+  }
+
+  for (const log of receipt.logs) {
+    try {
+      const parsed = contract.interface.parseLog({
+        topics: log.topics as string[],
+        data: log.data,
+      });
+      if (parsed?.name === "PermissionRequested") {
+        return {
+          isDualCustody: true,
+          requestId: BigInt(parsed.args.requestId),
+          assetId: BigInt(parsed.args.assetId),
+          subjectDID: String(parsed.args.subjectDID),
+          action: enumToAction(Number(parsed.args.action)),
+          requestedState: enumToState(Number(parsed.args.requestedState)),
+          requester: String(parsed.args.requester),
+          expiresAt: BigInt(parsed.args.expiresAt),
+          txHash: receipt.hash,
+        };
+      }
+      if (parsed?.name === "PermissionChanged") {
+        return {
+          isDualCustody: false,
+          permissionId: BigInt(parsed.args.permissionId),
+          validFrom: BigInt(parsed.args.validFrom),
+          txHash: receipt.hash,
+        };
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  throw new Error(
+    "Neither PermissionRequested nor PermissionChanged event found in transaction receipt"
+  );
+}
+
+/**
+ * Officer 2 (Checker) co-signs a pending dual-custody request.
+ * Officer 2 (Checker) co-signs a pending dual-custody request.
+ * Enforces msg.sender != request.requester (non-self-approval).
+ * Per dual-custody architecture, an explicit officer Signer MUST be provided.
+ * The server never holds or uses an approver key.
+ */
+export async function approvePermission(
+  requestId: bigint | number | string,
+  signer?: ethers.Signer
+): Promise<ethers.TransactionResponse> {
+  if (!signer) {
+    throw new Error(
+      "approvePermission requires an explicit officer Signer. " +
+      "Server-held approver keys are not permitted per dual-custody security architecture."
+    );
+  }
+  const writeContract = getReadContract().connect(signer) as ethers.Contract;
+  const fn = writeContract.getFunction("approvePermission");
+  return fn(requestId);
+}
+
+export async function approvePermissionAndDecode(
+  requestId: bigint | number | string,
+  signer?: ethers.Signer
+): Promise<{
+  requestId: bigint;
+  permissionId: bigint;
+  validFrom: bigint;
+  txHash: string;
+}> {
+  const contract = getReadContract();
+  const tx = await approvePermission(requestId, signer);
+  const receipt = await tx.wait();
+
+  if (!receipt) {
+    throw new Error("approvePermission transaction did not produce a receipt");
+  }
+
+  let approvedRequestId: bigint | null = null;
+  let permissionId: bigint | null = null;
+  let validFrom: bigint | null = null;
+
+  for (const log of receipt.logs) {
+    try {
+      const parsed = contract.interface.parseLog({
+        topics: log.topics as string[],
+        data: log.data,
+      });
+      if (parsed?.name === "PermissionApproved") {
+        approvedRequestId = BigInt(parsed.args.requestId);
+      } else if (parsed?.name === "PermissionChanged") {
+        permissionId = BigInt(parsed.args.permissionId);
+        validFrom = BigInt(parsed.args.validFrom);
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  if (approvedRequestId === null) {
+    throw new Error(
+      "PermissionApproved event not found in approvePermission transaction receipt"
+    );
+  }
+
+  return {
+    requestId: approvedRequestId,
+    permissionId: permissionId ?? 0n,
+    validFrom: validFrom ?? BigInt(Math.floor(Date.now() / 1000)),
+    txHash: receipt.hash,
+  };
+}
+
+/**
+ * Cancels a pending permission request. Only the requester or an ADMIN can cancel.
+ */
+export async function cancelPermissionRequest(
+  requestId: bigint | number | string,
+  signer?: ethers.Signer
+): Promise<ethers.TransactionResponse> {
+  const writeContract = signer
+    ? (getReadContract().connect(signer) as ethers.Contract)
+    : getWriteContract();
+
+  const fn = writeContract.getFunction("cancelPermissionRequest");
+  return fn(requestId);
+}
+
+export async function cancelPermissionRequestAndDecode(
+  requestId: bigint | number | string,
+  signer?: ethers.Signer
+): Promise<{
+  requestId: bigint;
+  cancelledBy: string;
+  txHash: string;
+}> {
+  const contract = getReadContract();
+  const tx = await cancelPermissionRequest(requestId, signer);
+  const receipt = await tx.wait();
+
+  if (!receipt) {
+    throw new Error(
+      "cancelPermissionRequest transaction did not produce a receipt"
+    );
+  }
+
+  for (const log of receipt.logs) {
+    try {
+      const parsed = contract.interface.parseLog({
+        topics: log.topics as string[],
+        data: log.data,
+      });
+      if (parsed?.name === "PermissionRequestCancelled") {
+        return {
+          requestId: BigInt(parsed.args.requestId),
+          cancelledBy: String(parsed.args.cancelledBy),
+          txHash: receipt.hash,
+        };
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  throw new Error(
+    "PermissionRequestCancelled event not found in transaction receipt"
+  );
+}
+
+/**
+ * Reads a single permission request by ID, including computed lifecycle status.
+ */
+export async function getPermissionRequest(
+  requestId: bigint | number | string
+): Promise<PermissionRequestRecord & { status: PermissionRequestStatus }> {
+  const contract = getReadContract();
+  const fn = contract.getFunction("getPermissionRequest");
+  const raw = await fn(requestId);
+  const normalized = normalizePermissionRequest(raw);
+
+  const now = BigInt(Math.floor(Date.now() / 1000));
+  let status: PermissionRequestStatus = "PENDING";
+  if (normalized.approved) {
+    status = "APPROVED";
+  } else if (normalized.cancelled) {
+    status = "CANCELLED";
+  } else if (now > normalized.expiresAt) {
+    status = "EXPIRED";
+  }
+
+  return {
+    ...normalized,
+    status,
+  };
+}
+
+/**
+ * Returns all permission requests recorded on-chain, optionally filtered by status.
+ */
+export async function getPermissionRequests(options?: {
+  status?: PermissionRequestStatus | "ALL";
+  fromBlock?: number;
+}): Promise<Array<PermissionRequestRecord & { status: PermissionRequestStatus }>> {
+  const contract = getReadContract();
+  const filter = contract.filters.PermissionRequested();
+  const events = await contract.queryFilter(filter, options?.fromBlock ?? 0);
+
+  const requests: Array<PermissionRequestRecord & { status: PermissionRequestStatus }> = [];
+  const seenIds = new Set<string>();
+
+  for (const event of events) {
+    try {
+      const parsed = contract.interface.parseLog({
+        topics: event.topics as string[],
+        data: event.data,
+      });
+      if (parsed?.name === "PermissionRequested") {
+        const id = BigInt(parsed.args.requestId);
+        const idStr = id.toString();
+        if (!seenIds.has(idStr)) {
+          seenIds.add(idStr);
+          const req = await getPermissionRequest(id);
+          if (
+            !options?.status ||
+            options.status === "ALL" ||
+            req.status === options.status
+          ) {
+            requests.push(req);
+          }
+        }
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return requests;
+}

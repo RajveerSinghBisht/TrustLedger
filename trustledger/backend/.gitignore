@@ -5,10 +5,15 @@ node_modules/
 dist/
 build/
 
-# Environment variables
+# Environment variables & Credentials
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+keystore/
+*keystore*.json
+UTC--*
 
 # Database
 *.sqlite

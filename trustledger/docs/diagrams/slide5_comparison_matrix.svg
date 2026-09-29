@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 540" width="100%" height="100%" style="background:#ffffff; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <!-- Soft Drop Shadow -->
+    <filter id="tableShadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.06"/>
+    </filter>
+  </defs>
+
+  <!-- Container Box -->
+  <rect x="15" y="15" width="790" height="510" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#tableShadow)"/>
+
+  <!-- Table Header Background -->
+  <path d="M 15 29 A 14 14 0 0 1 29 15 L 791 15 A 14 14 0 0 1 805 29 L 805 68 L 15 68 Z" fill="#0f172a"/>
+
+  <!-- Header Columns -->
+  <text x="35" y="46" fill="#f8fafc" font-size="12.5" font-weight="800">Capability / Parameter</text>
+  <text x="360" y="46" fill="#94a3b8" font-size="11.5" font-weight="700" text-anchor="middle">Conventional AD / RBAC</text>
+  <text x="500" y="46" fill="#94a3b8" font-size="11.5" font-weight="700" text-anchor="middle">BEL SecureDoc</text>
+  <text x="630" y="46" fill="#94a3b8" font-size="11.5" font-weight="700" text-anchor="middle">BEL SecureLedger</text>
+  
+  <!-- Highlight PRAMAAN Header -->
+  <rect x="702" y="16" width="103" height="52" fill="#0284c7" rx="0"/>
+  <path d="M 702 16 L 791 16 A 14 14 0 0 1 805 30 L 805 68 L 702 68 Z" fill="#0284c7"/>
+  <text x="753" y="46" fill="#ffffff" font-size="12.5" font-weight="900" text-anchor="middle">PRAMAAN</text>
+
+  <!-- Rows Background Stripes & Borders -->
+  <!-- Row 1 -->
+  <rect x="15" y="68" width="790" height="48" fill="#ffffff"/>
+  <line x1="15" y1="116" x2="805" y2="116" stroke="#f1f5f9" stroke-width="1.5"/>
+  <text x="35" y="97" fill="#1e293b" font-size="12" font-weight="700">1. Blockchain-backed records</text>
+  <text x="360" y="98" fill="#94a3b8" font-size="15" font-weight="800" text-anchor="middle">—</text>
+  <text x="500" y="98" fill="#16a34a" font-size="15" font-weight="900" text-anchor="middle">✓</text>
+  <text x="630" y="98" fill="#16a34a" font-size="15" font-weight="900" text-anchor="middle">✓</text>
+  <rect x="702" y="68" width="103" height="48" fill="#f0f9ff"/>
+  <text x="753" y="98" fill="#0284c7" font-size="15" font-weight="900" text-anchor="middle">✓</text>
+
+  <!-- Row 2 -->
+  <rect x="15" y="116" width="790" height="48" fill="#f8fafc"/>
+  <line x1="15" y1="164" x2="805" y2="164" stroke="#f1f5f9" stroke-width="1.5"/>
+  <text x="35" y="145" fill="#1e293b" font-size="12" font-weight="700">2. Document issuance &amp; verification</text>
+  <text x="360" y="146" fill="#94a3b8" font-size="15" font-weight="800" text-anchor="middle">—</text>
+  <text x="500" y="146" fill="#16a34a" font-size="15" font-weight="900" text-anchor="middle">✓</text>
+  <text x="630" y="146" fill="#94a3b8" font-size="15" font-weight="800" text-anchor="middle">—</text>
+  <rect x="702" y="116" width="103" height="48" fill="#f0f9ff"/>
+  <text x="753" y="146" fill="#94a3b8" font-size="15" font-weight="800" text-anchor="middle">—</text>
+
+  <!-- Row 3 -->
+  <rect x="15" y="164" width="790" height="48" fill="#ffffff"/>
+  <line x1="15" y1="212" x2="805" y2="212" stroke="#f1f5f9" stroke-width="1.5"/>
+  <text x="35" y="193" fill="#1e293b" font-size="12" font-weight="700">3. Physical asset tracking / MRO</text>
+  <text x="360" y="194" fill="#94a3b8" font-size="15" font-weight="800" text-anchor="middle">—</text>
+  <text x="500" y="194" fill="#94a3b8" font-size="15" font-weight="800" text-anchor="middle">—</text>
+  <text x="630" y="194" fill="#16a34a" font-size="15" font-weight="900" text-anchor="middle">✓</text>
+  <rect x="702" y="164" width="103" height="48" fill="#f0f9ff"/>
+  <text x="753" y="194" fill="#94a3b8" font-size="15" font-weight="800" text-anchor="middle">—</text>
+
+  <!-- Row 4 -->
+  <rect x="15" y="212" width="790" height="48" fill="#f8fafc"/>
+  <line x1="15" y1="260" x2="805" y2="260" stroke="#f1f5f9" stroke-width="1.5"/>
+  <text x="35" y="241" fill="#1e293b" font-size="12" font-weight="700">4. Operational access enforcement</text>
+  <text x="360" y="242" fill="#16a34a" font-size="15" font-weight="900" text-anchor="middle">✓</text>
+  <text x="500" y="242" fill="#94a3b8" font-size="15" font-weight="800" text-anchor="middle">—</text>
+  <text x="630" y="242" fill="#94a3b8" font-size="15" font-weight="800" text-anchor="middle">—</text>
+  <rect x="702" y="212" width="103" height="48" fill="#f0f9ff"/>
+  <text x="753" y="242" fill="#0284c7" font-size="15" font-weight="900" text-anchor="middle">✓</text>
+
+  <!-- Row 5 -->
+  <rect x="15" y="260" width="790" height="48" fill="#ffffff"/>
+  <line x1="15" y1="308" x2="805" y2="308" stroke="#f1f5f9" stroke-width="1.5"/>
+  <text x="35" y="289" fill="#1e293b" font-size="12" font-weight="700">5. Versioned historical authorization</text>
+  <text x="360" y="290" fill="#94a3b8" font-size="15" font-weight="800" text-anchor="middle">—</text>
+  <text x="500" y="290" fill="#94a3b8" font-size="15" font-weight="800" text-anchor="middle">—</text>
+  <text x="630" y="290" fill="#94a3b8" font-size="15" font-weight="800" text-anchor="middle">—</text>
+  <rect x="702" y="260" width="103" height="48" fill="#f0f9ff"/>
+  <text x="753" y="290" fill="#0284c7" font-size="15" font-weight="900" text-anchor="middle">✓</text>
+
+  <!-- Row 6 -->
+  <rect x="15" y="308" width="790" height="48" fill="#f8fafc"/>
+  <line x1="15" y1="356" x2="805" y2="356" stroke="#f1f5f9" stroke-width="1.5"/>
+  <text x="35" y="337" fill="#1e293b" font-size="12" font-weight="700">6. Two-officer wallet approval</text>
+  <text x="360" y="338" fill="#94a3b8" font-size="15" font-weight="800" text-anchor="middle">—</text>
+  <text x="500" y="338" fill="#94a3b8" font-size="15" font-weight="800" text-anchor="middle">—</text>
+  <text x="630" y="338" fill="#94a3b8" font-size="15" font-weight="800" text-anchor="middle">—</text>
+  <rect x="702" y="308" width="103" height="48" fill="#f0f9ff"/>
+  <text x="753" y="338" fill="#0284c7" font-size="15" font-weight="900" text-anchor="middle">✓</text>
+
+  <!-- Row 7 -->
+  <rect x="15" y="356" width="790" height="48" fill="#ffffff"/>
+  <line x1="15" y1="404" x2="805" y2="404" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="35" y="385" fill="#1e293b" font-size="12" font-weight="700">7. Blockchain-verifiable proof receipt</text>
+  <text x="360" y="386" fill="#94a3b8" font-size="15" font-weight="800" text-anchor="middle">—</text>
+  <text x="500" y="386" fill="#94a3b8" font-size="15" font-weight="800" text-anchor="middle">—</text>
+  <text x="630" y="386" fill="#94a3b8" font-size="15" font-weight="800" text-anchor="middle">—</text>
+  <rect x="702" y="356" width="103" height="48" fill="#f0f9ff"/>
+  <text x="753" y="386" fill="#0284c7" font-size="15" font-weight="900" text-anchor="middle">✓</text>
+
+  <!-- Footer Legend & Positioning -->
+  <rect x="15" y="405" width="790" height="120" fill="#f8fafc" rx="0"/>
+  <path d="M 15 405 L 805 405 L 805 511 A 14 14 0 0 1 791 525 L 29 525 A 14 14 0 0 1 15 511 Z" fill="#f8fafc"/>
+  
+  <text x="35" y="432" fill="#0f172a" font-size="11.5" font-weight="800">Legend &amp; Architectural Positioning:</text>
+  <text x="35" y="452" fill="#15803d" font-size="10.5" font-weight="700">✓ = Publicly documented / implemented in PRAMAAN prototype</text>
+  <text x="365" y="452" fill="#64748b" font-size="10.5" font-weight="600">— = Not publicly documented as a core capability / outside PRAMAAN prototype scope</text>
+  <text x="35" y="475" fill="#475569" font-size="10.5" font-weight="600">Conventional AD/RBAC enforces current access; BEL SecureDoc verifies documents; BEL SecureLedger tracks assets.</text>
+  <text x="35" y="493" fill="#0284c7" font-size="10.5" font-weight="700">PRAMAAN adds point-in-time authorization history, two-officer approvals, and verifiable access evidence.</text>
+</svg>

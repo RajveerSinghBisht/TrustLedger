@@ -88,6 +88,29 @@ exact function signature that does this.
   around historical identity status (IdentityRegistry has no status
   history).
 
+### 3.1 Dual-Custody Permission Request (Maker-Checker Authorization)
+
+For classified assets (`CONFIDENTIAL`), permissions are not granted unilaterally. A two-man approval rule governs policy mutation:
+
+| Field           | Type    | Where it lives | Notes                                    |
+|-----------------|---------|-----------------|-------------------------------------------|
+| requestId       | uint256 | On-chain        | Auto-incremented unique request ID        |
+| assetId         | uint256 | On-chain        | Target asset (must be CONFIDENTIAL for dual-custody) |
+| subjectDID      | string  | On-chain        | Subject whose access is being granted or revoked |
+| action          | enum    | On-chain        | READ \| WRITE \| TRANSFER                 |
+| requestedState  | enum    | On-chain        | GRANTED \| REVOKED                        |
+| requester       | address | On-chain        | Officer 1 (Maker) wallet address          |
+| approver        | address | On-chain        | Officer 2 (Checker) wallet address (set on approval) |
+| createdAt       | uint256 | On-chain        | Unix timestamp of request submission      |
+| expiresAt       | uint256 | On-chain        | Deterministic 24-hour expiration (`createdAt + 24 hours`) |
+| status          | enum    | On-chain        | PENDING \| APPROVED \| CANCELLED \| EXPIRED |
+
+**Dual-Custody Enforcement Rules:**
+- `PENDING`: Request initiated by Officer 1. Awaiting Officer 2 review.
+- `APPROVED`: Officer 2 approves request on-chain. Contract strictly enforces `msg.sender != requester` (cryptographic key separation) and `block.timestamp <= expiresAt`. On approval, the permission is appended to the versioned timeline (Section 3).
+- `CANCELLED`: Officer 1 or an active Admin aborts the request before approval.
+- `EXPIRED`: Evaluated dynamically when `block.timestamp > expiresAt`. Approval transactions revert automatically.
+
 ## 4. Proof Bundle (Our second USP — generated, not stored on-chain)
 
 A proof bundle is generated on demand when someone accesses or verifies a

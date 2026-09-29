@@ -175,13 +175,14 @@ export function Badge({
   tone = "neutral",
 }: {
   children: ReactNode;
-  tone?: "neutral" | "green" | "red" | "blue";
+  tone?: "neutral" | "green" | "red" | "blue" | "amber";
 }) {
   const styles = {
     neutral: "bg-(--surface-hover) text-(--text-primary) border border-(--border)",
     green: "bg-(--success-bg) text-(--success) border border-(--success-border)",
     red: "bg-(--danger-bg) text-(--danger) border border-(--danger-border)",
     blue: "bg-(--accent)/15 text-(--accent) border border-(--accent)/30",
+    amber: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
   }[tone];
 
   return (
@@ -251,6 +252,48 @@ export function FadeIn({
       } ${className}`}
     >
       {children}
+    </div>
+  );
+}
+
+export function Modal({
+  open,
+  onClose,
+  children,
+  className = "",
+}: {
+  open: boolean;
+  onClose: () => void;
+  children: ReactNode;
+  className?: string;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      {/* Modal Dialog Card */}
+      <div
+        className={`relative z-10 w-full max-w-lg rounded-2xl border border-(--border) bg-(--surface) p-6 sm:p-8 shadow-2xl transition-all duration-200 ${className}`}
+        role="dialog"
+        aria-modal="true"
+      >
+        {children}
+      </div>
     </div>
   );
 }

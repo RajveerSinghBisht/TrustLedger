@@ -294,4 +294,11 @@ contract AssetRegistry is ERC721 {
         require(assetExists[assetId], "AssetRegistry: asset does not exist");
         return assets[assetId];
     }
+
+    /// @dev Disables unmediated ERC-721 transferFrom and safeTransferFrom.
+    ///      All asset transfers must proceed via transferAsset() to ensure
+    ///      AccessControl authorization and atomic ownerDID synchronization.
+    function transferFrom(address, address, uint256) public pure override(ERC721) {
+        revert("AssetRegistry: use transferAsset() for asset transfers");
+    }
 }

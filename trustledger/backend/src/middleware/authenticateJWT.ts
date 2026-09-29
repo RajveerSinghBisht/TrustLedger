@@ -58,13 +58,15 @@ export function authenticateJWT(
   const token = match[1];
 
   // OWASP: key rotation support — try the current JWT_SECRET first,
-  // then fall back to JWT_SECRET_PREVIOUS if set. This enables
-  // zero-downtime key rotation: deploy with new key → wait for all
-  // old JWTs to expire (15 min) → remove the previous key.
+  // then fall back to JWT_SECRET_PREVIOUS if set, and backendSigningPrivateKey
+  // for seamless transition/backward compatibility.
   const config = getConfig();
   const keysToTry: string[] = [config.jwtSecret];
-  if (config.jwtSecretPrevious) {
+  if (config.jwtSecretPrevious && !keysToTry.includes(config.jwtSecretPrevious)) {
     keysToTry.push(config.jwtSecretPrevious);
+  }
+  if (!keysToTry.includes(config.backendSigningPrivateKey)) {
+    keysToTry.push(config.backendSigningPrivateKey);
   }
 
   let decoded: jwt.JwtPayload | null = null;

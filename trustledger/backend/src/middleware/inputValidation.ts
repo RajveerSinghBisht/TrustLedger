@@ -144,6 +144,33 @@ export const verifyPermissionQuerySchema = z.object({
   atTimestamp: positiveIntString,
 });
 
+// POST /api/permissions/request — dual-custody permission request
+export const requestPermissionSchema = z
+  .object({
+    assetId: z.union([
+      positiveInt,
+      positiveIntString,
+    ]),
+    subjectDID: didField,
+    action: z.enum(["READ", "WRITE", "TRANSFER"]),
+    state: z.enum(["GRANTED", "REVOKED"]).optional().default("GRANTED"),
+  })
+  .strict();
+
+// URL param schema for :requestId (GET/POST /api/permissions/requests/:requestId/*)
+export const requestIdParamSchema = z
+  .object({
+    requestId: positiveIntString,
+  })
+  .strict();
+
+// GET /api/permissions/requests query params
+export const listRequestsQuerySchema = z
+  .object({
+    status: z.enum(["PENDING", "APPROVED", "CANCELLED", "EXPIRED", "ALL"]).optional(),
+  })
+  .strict();
+
 // POST /api/assets — multipart body fields (file validated separately)
 export const registerAssetBodySchema = z.object({
   ownerDID: didField,

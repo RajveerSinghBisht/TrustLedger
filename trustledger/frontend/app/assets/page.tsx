@@ -17,6 +17,8 @@ import {
   Spinner,
   EmptyState,
   FadeIn,
+  Modal,
+  Badge,
 } from "@/components/ui";
 
 const classifications: Classification[] = ["PUBLIC", "INTERNAL", "CONFIDENTIAL"];
@@ -31,15 +33,23 @@ export default function AssetsPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<RegisterAssetResponse | null>(null);
 
+  // Blockchain immutability recheck modal state
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [stagedFile, setStagedFile] = useState<File | null>(null);
+
   const [lookupId, setLookupId] = useState("");
   const [lookupResult, setLookupResult] = useState<AssetRecord | null>(null);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handlePreSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!token) {
       setError("Not authenticated. Connect MetaMask and sign in first.");
+      return;
+    }
+    if (claims?.role !== "ADMIN") {
+      setError("Only ADMIN role can register assets in AssetRegistry.sol.");
       return;
     }
     const file = fileRef.current?.files?.[0];
@@ -47,6 +57,17 @@ export default function AssetsPage() {
       setError("Choose a file to upload.");
       return;
     }
+    setError(null);
+    setStagedFile(file);
+    setShowConfirmModal(true);
+  }
+
+  async function handleConfirmedSubmit() {
+    setShowConfirmModal(false);
+    if (!token) return;
+    const file = stagedFile || fileRef.current?.files?.[0];
+    if (!file) return;
+
     setSubmitting(true);
     setError(null);
     setResult(null);
@@ -100,7 +121,7 @@ export default function AssetsPage() {
       )}
 
       <Card>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handlePreSubmit} className="space-y-4">
           <Field label="File">
             <div className="text-sm text-(--text-muted)">
               <input
@@ -161,6 +182,103 @@ export default function AssetsPage() {
           </FadeIn>
         )}
       </Card>
+
+      {/* Blockchain Immutability Recheck Modal */}
+      <Modal open={showConfirmModal} onClose={() => !submitting && setShowConfirmModal(false)}>
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-400">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+            </div>
+            <div>
+              <span className="font-mono text-[10px] tracking-wider uppercase text-amber-500 font-semibold block mb-1">
+                BLOCKCHAIN IMMUTABILITY CHECK
+              </span>
+              <h3 className="text-lg font-bold text-(--text-primary) tracking-tight">
+                Recheck Asset Details Before Registering
+              </h3>
+            </div>
+          </div>
+
+          {/* Warning Banner */}
+          <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-4 text-xs font-mono text-(--text-muted) space-y-2 leading-relaxed">
+            <p className="text-(--text-primary) font-semibold flex items-center gap-1.5">
+              <span>⚠️</span> Once saved on-chain, nothing can be edited or tampered with.
+            </p>
+            <p>
+              As this is committed to the blockchain, the cryptographic SHA-256 fingerprint, ownership DID, and classification level are permanently immutable. Please verify that all document attributes are correct.
+            </p>
+          </div>
+
+          {/* Staged Details Review */}
+          <div className="rounded-xl border border-(--border) bg-(--bg) p-4 text-xs font-mono">
+            <div className="divide-y divide-(--border)">
+              <div className="py-2.5 flex justify-between items-center gap-4">
+                <span className="text-(--text-muted)">DOCUMENT_FILE:</span>
+                <span className="text-(--text-primary) font-medium truncate max-w-xs text-right">
+                  {stagedFile?.name ?? "document"}
+                </span>
+              </div>
+              <div className="py-2.5 flex justify-between items-center gap-4">
+                <span className="text-(--text-muted)">DOCUMENT_SIZE:</span>
+                <span className="text-(--text-primary)">
+                  {stagedFile
+                    ? stagedFile.size > 1024 * 1024
+                      ? `${(stagedFile.size / (1024 * 1024)).toFixed(2)} MB`
+                      : `${(stagedFile.size / 1024).toFixed(1)} KB`
+                    : "0 KB"}
+                </span>
+              </div>
+              <div className="py-2.5 flex justify-between items-center gap-4">
+                <span className="text-(--text-muted)">CLASSIFICATION:</span>
+                <Badge tone={classification === "CONFIDENTIAL" ? "amber" : classification === "INTERNAL" ? "blue" : "green"}>
+                  {classification}
+                </Badge>
+              </div>
+              <div className="py-2.5 flex justify-between items-center gap-4">
+                <span className="text-(--text-muted)">ASSIGNED_OWNER:</span>
+                <span className="text-(--text-primary) truncate max-w-xs text-right">
+                  {ownerDID.trim() || did || "Self"}
+                </span>
+              </div>
+              <div className="py-2.5 flex justify-between items-center gap-4">
+                <span className="text-(--text-muted)">TARGET_CONTRACT:</span>
+                <span className="text-(--accent) font-semibold">AssetRegistry.sol</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setShowConfirmModal(false)}
+              className="w-full sm:w-auto"
+            >
+              Cancel &amp; Recheck
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleConfirmedSubmit}
+              disabled={submitting}
+              className="w-full sm:w-auto font-bold"
+            >
+              {submitting ? (
+                <>
+                  <Spinner /> Committing...
+                </>
+              ) : (
+                "Confirm & Commit to Blockchain"
+              )}
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <Card>
         <h2 className="text-sm font-semibold text-(--text-primary) mb-3">

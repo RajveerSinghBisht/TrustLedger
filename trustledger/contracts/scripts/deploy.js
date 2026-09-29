@@ -172,12 +172,39 @@ async function main() {
   const assetRegistryAddress = await assetRegistry.getAddress();
   console.log("    AssetRegistry deployed to:", assetRegistryAddress);
 
+  // --- 4. Wire AssetRegistry into AccessControl (One-Shot Initializer) ---
+  console.log("Linking AssetRegistry to AccessControl for dual-custody classification lookup...");
+  const setRegistryTx = await accessControl.setAssetRegistry(assetRegistryAddress);
+  await setRegistryTx.wait();
+  console.log("    AssetRegistry successfully linked to AccessControl.");
+
+  // --- 5. Register Officer 2 (Dual-Custody Co-Signer) ---
+  const signers = await ethers.getSigners();
+  const officer2 = signers[1] || deployer;
+  const officer2DID = `did:trustledger:${officer2.address}`;
+  if (officer2.address !== deployer.address) {
+    console.log("Registering Officer 2 (MANAGER) for dual-custody co-signing...");
+    const regTx = await identityRegistry.registerIdentity(
+      officer2.address,
+      officer2DID,
+      "0x00",
+      1 // Role.MANAGER
+    );
+    await regTx.wait();
+    console.log("    Officer 2 registered:", officer2.address);
+  }
+
   console.log("");
-  console.log("All three contracts deployed successfully.");
+  console.log("All three contracts deployed and wired successfully.");
   console.log("");
-  console.log("Bootstrap Admin identity:");
+  console.log("Bootstrap Admin identity (Officer 1):");
   console.log("    address:", deployer.address);
   console.log("    did:", bootstrapDID);
+  if (officer2.address !== deployer.address) {
+    console.log("Officer 2 identity (Co-Signer):");
+    console.log("    address:", officer2.address);
+    console.log("    did:", officer2DID);
+  }
   console.log("");
   console.log(
     "backend/.env is updated automatically below. If that failed for" +

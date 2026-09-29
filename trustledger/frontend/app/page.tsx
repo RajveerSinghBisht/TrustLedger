@@ -107,21 +107,29 @@ function registerAsset(
   },
   {
     num: "03",
-    tag: "POLICY",
+    tag: "DUAL-CUSTODY",
     href: "/permissions",
-    title: "Grant Access Policy",
-    desc: "Admin or Manager grants READ access to a subject DID. Recorded in AccessControl.sol with immutable validity timestamps.",
+    title: "Dual-Custody Two-Man Rule",
+    desc: "Cryptographic separation of duties for sensitive assets. Officer 1 initiates an on-chain permission request; Officer 2 confirms before policy issuance.",
     code: `// AccessControl.sol
-function grantAccess(
-  bytes32 assetId,
-  address subject,
-  uint256 validUntil
-) external onlyAuthorized {
-  policies[assetId][subject] = Policy({
-    validFrom: block.timestamp,
-    validUntil: validUntil,
-    active: true
+function requestPermission(
+  uint256 assetId,
+  string calldata subjectDID,
+  Action action
+) external onlyRole(OFFICER_ROLE) {
+  uint256 reqId = nextRequestId++;
+  permissionRequests[reqId] = PermissionRequest({
+    requestId: reqId,
+    assetId: assetId,
+    subjectDID: subjectDID,
+    action: action,
+    requester: msg.sender,
+    requestedAt: block.timestamp,
+    expiresAt: block.timestamp + 24 hours,
+    approved: false,
+    cancelled: false
   });
+  emit PermissionRequested(reqId, assetId, subjectDID);
 }`,
   },
   {
@@ -191,14 +199,14 @@ const devSnippets = [
 
 const client = new PRAMAAN({
   rpcUrl: 'http://127.0.0.1:8545',
-  contractAddress: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0',
+  contractAddress: '0x0000000000000000000000000000000000000000',
   privateKey: process.env.PRIVATE_KEY
 });
 
 // Register on-chain verifiable document
 const asset = await client.registerAsset({
   filePath: './contract-v1.pdf',
-  accessRules: [{ did: 'did:trustledger:0xf3...', permission: 'READ' }]
+  accessRules: [{ did: 'did:trustledger:0x0000...', permission: 'READ' }]
 });`,
   },
   {
@@ -221,8 +229,14 @@ npx @pramaan/cli verify-proof \\
   },
 ];
 
-// Rotating Hero Verbs
-const rotatingVerbs = ["VERIFY", "PROTECT", "AUDIT", "ENFORCE"];
+// Rotating Hero Features
+const rotatingFeatures = [
+  "A WITNESS",
+  "DUAL CUSTODY",
+  "PROOF",
+  "TEMPORAL AUDITS",
+  "CONSENSUS",
+];
 
 // Tech Stack Showcase Data & Crisp Vector Logos
 const techStackItems = [
@@ -367,16 +381,64 @@ const techStackItems = [
       </svg>
     ),
   },
+  {
+    name: "Node.js",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-8 h-8 sm:w-9 sm:h-9 shrink-0" fill="none">
+        <path d="M12 2.5l8.5 4.9v9.8L12 22.1l-8.5-4.9V7.4L12 2.5z" fill="#5FA04E" fillOpacity="0.2" stroke="#5FA04E" strokeWidth="1.6" />
+        <path d="M12 7.2v9.6m-4.2-7.2l8.4 4.8m-8.4 0l8.4-4.8" stroke="#5FA04E" strokeWidth="1.4" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    name: "Zod",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-8 h-8 sm:w-9 sm:h-9 shrink-0" fill="none">
+        <rect width="24" height="24" rx="6" fill="#3068B7" fillOpacity="0.2" />
+        <path d="M7 7h10l-10 10h10" stroke="#3068B7" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    name: "Jest",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-8 h-8 sm:w-9 sm:h-9 shrink-0" fill="none">
+        <rect width="24" height="24" rx="6" fill="#C21325" fillOpacity="0.2" />
+        <path d="M9 3h6v4H9V3zm0 4l-4 9a3 3 0 002.8 4h8.4a3 3 0 002.8-4l-4-9H9z" stroke="#C21325" strokeWidth="1.6" strokeLinejoin="round" />
+        <circle cx="10" cy="14" r="1" fill="#C21325" />
+        <circle cx="14" cy="14" r="1" fill="#C21325" />
+      </svg>
+    ),
+  },
+  {
+    name: "ECDSA (secp256k1)",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-8 h-8 sm:w-9 sm:h-9 shrink-0" fill="none">
+        <rect width="24" height="24" rx="6" fill="#8B5CF6" fillOpacity="0.2" />
+        <path d="M7 17a5 5 0 0110 0M12 7v5m0 0l2-2m-2 2l-2-2" stroke="#8B5CF6" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="12" cy="7" r="2.5" stroke="#8B5CF6" strokeWidth="1.6" />
+      </svg>
+    ),
+  },
+  {
+    name: "SHA-256",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-8 h-8 sm:w-9 sm:h-9 shrink-0" fill="none">
+        <rect width="24" height="24" rx="6" fill="#0EA5E9" fillOpacity="0.2" />
+        <path d="M4 12h16M12 4v16M8 8l8 8M16 8l-8 8" stroke="#0EA5E9" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    ),
+  },
 ];
 
 export default function Home() {
   const { address, did, token, claims } = useAuth();
 
-  // Verb rotator
-  const [verbIdx, setVerbIdx] = useState(0);
+  // Feature rotator
+  const [featureIdx, setFeatureIdx] = useState(0);
   useEffect(() => {
     const timer = setInterval(() => {
-      setVerbIdx((prev) => (prev + 1) % rotatingVerbs.length);
+      setFeatureIdx((prev) => (prev + 1) % rotatingFeatures.length);
     }, 2800);
     return () => clearInterval(timer);
   }, []);
@@ -466,31 +528,31 @@ export default function Home() {
         <div className="relative z-10 max-w-350 mx-auto px-6 lg:px-12 py-24 lg:py-32">
           {/* Subtitle / System Kicker */}
           <div className="mb-8">
-            <span className="inline-flex items-center gap-3 text-xs sm:text-sm font-mono text-(--text-muted)">
-              <span className="w-8 h-px bg-(--text-primary)/30" />
-              SIH 2026 // PS 26125 CONSENSUS PROTOCOL ENGINE
+            <span className="inline-flex items-center gap-3 text-xs sm:text-sm font-mono text-(--text-muted) tracking-wider uppercase">
+              <span className="w-8 h-px bg-(--accent)" />
+              ACCESS CONTROL // TEMPORAL AUDIT ENGINE // EVM LOCALNET 31337
             </span>
           </div>
 
           {/* Main Display Headline */}
           <div className="mb-10 max-w-5xl">
-            <h1 className="text-[clamp(2.75rem,8vw,7.5rem)] font-display leading-[0.95] tracking-tight text-(--text-primary)">
-              <span className="block">Tamper-evident</span>
-              <span className="block">
-                document security to{" "}
-                <span className="relative inline-block">
+            <h1 className="text-[clamp(2.25rem,6vw,5.5rem)] font-display leading-[1.02] tracking-tight text-(--text-primary)">
+              <span className="block">Access has a timeline.</span>
+              <span className="block text-(--text-muted)">Now it has</span>
+              <span className="block mt-1 sm:mt-2">
+                <span className="relative inline-block text-(--accent)">
                   <span className="inline-flex">
-                    {rotatingVerbs[verbIdx].split("").map((char, cIdx) => (
+                    {rotatingFeatures[featureIdx].split("").map((char, cIdx) => (
                       <span
-                        key={`${verbIdx}-${cIdx}`}
+                        key={`${featureIdx}-${cIdx}`}
                         className="inline-block animate-char-in"
-                        style={{ animationDelay: `${40 * cIdx}ms` }}
+                        style={{ animationDelay: `${35 * cIdx}ms` }}
                       >
-                        {char}
+                        {char === " " ? "\u00A0" : char}
                       </span>
                     ))}
                   </span>
-                  <span className="absolute -bottom-2 left-0 right-0 h-2.5 bg-(--text-primary)/10" />
+                  <span className="absolute -bottom-1.5 left-0 right-0 h-2 bg-(--accent)/20" />
                 </span>
               </span>
             </h1>
@@ -499,7 +561,7 @@ export default function Home() {
           {/* Subtitle & Actions Grid */}
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-24 items-end">
             <p className="text-lg lg:text-2xl text-(--text-muted) leading-relaxed max-w-xl font-normal">
-              Autonomous, zero-trust infrastructure. Enforces on-chain access policies, generates verifiable proof bundles, and enables cryptographic temporal audits at block speed.
+              On-chain permission history that proves who was authorized, and exactly when — independent of what is true today. Backed by dual-custody consensus and portable cryptographic proof bundles.
             </p>
 
             <div className="flex flex-col sm:flex-row items-start gap-4">
@@ -625,10 +687,36 @@ export default function Home() {
               </div>
               <div className="lg:col-span-6">
                 <h3 className="text-3xl lg:text-4xl font-display text-(--text-primary) mb-3 group-hover:translate-x-1.5 transition-transform duration-300">
+                  Dual-Custody Two-Man Rule
+                </h3>
+                <p className="text-base lg:text-lg text-(--text-muted) leading-relaxed">
+                  Cryptographic separation of duties for critical assets. Multi-officer consensus requires separate requester and authorizer signatures before on-chain policy issuance.
+                </p>
+              </div>
+              <div className="lg:col-span-5 flex justify-start lg:justify-end">
+                <div className="p-4 rounded-xl border border-(--border) bg-(--surface) flex items-center gap-4 text-xs font-mono">
+                  <div className="w-10 h-10 rounded-full border border-(--border) flex items-center justify-center bg-(--bg)">
+                    <ShieldCheck className="w-5 h-5 text-(--text-primary)" />
+                  </div>
+                  <div>
+                    <span className="text-(--text-muted) block">TWO-MAN CONSENSUS</span>
+                    <span className="text-(--text-primary) font-semibold">AccessControl.sol</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 04 */}
+            <div className="group py-12 lg:py-16 grid lg:grid-cols-12 gap-8 items-center">
+              <div className="lg:col-span-1">
+                <span className="font-mono text-sm text-(--text-muted)">04</span>
+              </div>
+              <div className="lg:col-span-6">
+                <h3 className="text-3xl lg:text-4xl font-display text-(--text-primary) mb-3 group-hover:translate-x-1.5 transition-transform duration-300">
                   Temporal Historical Reasoning
                 </h3>
                 <p className="text-base lg:text-lg text-(--text-muted) leading-relaxed">
-                  The SIH core innovation. Query whether an actor was legitimately authorized at an exact past timestamp (T-delta). Compare state before vs. after revocation.
+                  The core innovation: query whether an actor was legitimately authorized at an exact past timestamp (T-delta). Deterministically compare state before vs. after revocation.
                 </p>
               </div>
               <div className="lg:col-span-5 flex justify-start lg:justify-end">
@@ -644,23 +732,23 @@ export default function Home() {
               </div>
             </div>
 
-            {/* 04 */}
+            {/* 05 */}
             <div className="group py-12 lg:py-16 grid lg:grid-cols-12 gap-8 items-center">
               <div className="lg:col-span-1">
-                <span className="font-mono text-sm text-(--text-muted)">04</span>
+                <span className="font-mono text-sm text-(--text-muted)">05</span>
               </div>
               <div className="lg:col-span-6">
                 <h3 className="text-3xl lg:text-4xl font-display text-(--text-primary) mb-3 group-hover:translate-x-1.5 transition-transform duration-300">
                   Independent Proof Verifier
                 </h3>
                 <p className="text-base lg:text-lg text-(--text-muted) leading-relaxed">
-                  Third-party auditors can verify proof bundles offline or online without an account. Re-validates ECDSA digital signatures and confirms block truth.
+                  Third-party auditors can independently verify proof bundles online without an account. Re-validates cryptographic signatures and confirms live block truth via external RPC.
                 </p>
               </div>
               <div className="lg:col-span-5 flex justify-start lg:justify-end">
                 <div className="p-4 rounded-xl border border-(--border) bg-(--surface) flex items-center gap-4 text-xs font-mono">
                   <div className="w-10 h-10 rounded-full border border-(--border) flex items-center justify-center bg-(--bg)">
-                    <ShieldCheck className="w-5 h-5 text-(--text-primary)" />
+                    <FileCheck className="w-5 h-5 text-(--text-primary)" />
                   </div>
                   <div>
                     <span className="text-(--text-muted) block">PUBLIC AUDITABILITY</span>
@@ -1026,22 +1114,22 @@ export default function Home() {
                 A thoughtfully designed TypeScript and Smart Contract interface that gets out of your way. Integrate enterprise document authorization in minutes.
               </p>
 
-              <div className="grid grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 sm:gap-10">
                 <div>
-                  <h3 className="font-medium text-sm text-(--text-primary) mb-1.5">TypeScript Native</h3>
-                  <p className="text-xs text-(--text-muted) leading-relaxed">Full type safety with auto-generated Ethers typechains.</p>
+                  <h3 className="font-semibold text-base sm:text-lg text-(--text-primary) mb-2">TypeScript Native</h3>
+                  <p className="text-sm sm:text-base text-(--text-muted) leading-relaxed">Full type safety with auto-generated Ethers typechains.</p>
                 </div>
                 <div>
-                  <h3 className="font-medium text-sm text-(--text-primary) mb-1.5">Zero Config</h3>
-                  <p className="text-xs text-(--text-muted) leading-relaxed">Runs on local Hardhat, Sepolia testnet, or Ethereum mainnet.</p>
+                  <h3 className="font-semibold text-base sm:text-lg text-(--text-primary) mb-2">Zero Config</h3>
+                  <p className="text-sm sm:text-base text-(--text-muted) leading-relaxed">Runs on local Hardhat, Sepolia testnet, or Ethereum mainnet.</p>
                 </div>
                 <div>
-                  <h3 className="font-medium text-sm text-(--text-primary) mb-1.5">Edge-Ready</h3>
-                  <p className="text-xs text-(--text-muted) leading-relaxed">Compatible with Next.js, Node, Bun, and browser environments.</p>
+                  <h3 className="font-semibold text-base sm:text-lg text-(--text-primary) mb-2">Edge-Ready</h3>
+                  <p className="text-sm sm:text-base text-(--text-muted) leading-relaxed">Compatible with Next.js, Node, Bun, and browser environments.</p>
                 </div>
                 <div>
-                  <h3 className="font-medium text-sm text-(--text-primary) mb-1.5">Zero Dependencies</h3>
-                  <p className="text-xs text-(--text-muted) leading-relaxed">Lightweight cryptography with standard Web Crypto & Ethers v6.</p>
+                  <h3 className="font-semibold text-base sm:text-lg text-(--text-primary) mb-2">Zero Dependencies</h3>
+                  <p className="text-sm sm:text-base text-(--text-muted) leading-relaxed">Lightweight cryptography with standard Web Crypto &amp; Ethers v6.</p>
                 </div>
               </div>
             </div>
@@ -1108,9 +1196,9 @@ export default function Home() {
           >
             {/* Interactive Mouse Spotlight */}
             <div
-              className="absolute inset-0 opacity-15 pointer-events-none transition-opacity duration-300"
+              className="absolute inset-0 opacity-20 pointer-events-none transition-opacity duration-300"
               style={{
-                background: `radial-gradient(600px circle at ${spotlight.x}% ${spotlight.y}%, rgba(8, 5, 3, 0.25), transparent 45%)`,
+                background: `radial-gradient(600px circle at ${spotlight.x}% ${spotlight.y}%, rgba(56, 189, 248, 0.15), transparent 45%)`,
               }}
             />
 
@@ -1123,7 +1211,7 @@ export default function Home() {
                     Cryptographic.
                   </h2>
                   <p className="text-lg lg:text-xl text-(--text-muted) mb-12 leading-relaxed">
-                    Verify any cryptographic proof bundle offline or on-chain without an account. Zero login credentials required.
+                    Verify any cryptographic proof bundle independently on-chain without an account. Zero login credentials or platform trust required.
                   </p>
 
                   <div className="flex flex-col sm:flex-row items-start gap-4">
@@ -1155,7 +1243,170 @@ export default function Home() {
       </section>
 
       {/* =========================================================================
-          SECTION 8: BESPOKE FOOTER (Optimus Footer Style)
+          SECTION 8: ABOUT PROJECT // SPECIFICATION & VERIFICATION DOSSIER
+      ========================================================================= */}
+      <section id="about" className="relative py-20 lg:py-28 border-b border-(--border)">
+        <div className="max-w-350 mx-auto px-6 lg:px-12">
+          {/* Eyebrow */}
+          <div className="mb-12">
+            <span className="inline-flex items-center gap-3 text-xs sm:text-sm font-mono text-(--text-muted) tracking-wider uppercase">
+              <span className="w-8 h-px bg-(--accent)" />
+              PROJECT DOSSIER // PROBLEM STATEMENT 26125
+            </span>
+          </div>
+
+          <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+            {/* Left Column: Problem, Gap, & Reproducible Verification (6 cols) */}
+            <div className="lg:col-span-6 space-y-6">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display tracking-tight text-(--text-primary) leading-tight">
+                The Historical Authorization Problem
+              </h2>
+
+              <p className="text-base sm:text-lg text-(--text-muted) leading-relaxed">
+                Built for Smart India Hackathon Problem Statement 26125: a blockchain-based platform for identity, access control, and digital asset management.
+              </p>
+
+              <p className="text-sm sm:text-base text-(--text-muted) leading-relaxed">
+                Existing blockchain platforms solve document notarization or asset tracking. Neither answers a harder question: <span className="text-(--text-primary) font-medium">was this access authorized at the moment it happened, under the rules that existed then?</span> PRAMAAN implements append-only temporal access provenance to ensure authorization decisions remain mathematically provable long after clearances change.
+              </p>
+
+              {/* GitHub Repo Interactive Card (Option A: Clean Technical CTA) */}
+              <div className="pt-2">
+                <a
+                  href="https://github.com/RajveerSinghBisht/TrustLedger"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-3 px-5 py-3 rounded-lg border border-(--border) bg-(--surface) hover:bg-(--surface-hover) hover:border-(--border-hover) text-(--text-primary) text-xs sm:text-sm font-mono transition-colors duration-150 group"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="w-4 h-4 fill-current shrink-0 text-(--text-muted) group-hover:text-(--text-primary) transition-colors"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      clipRule="evenodd"
+                      d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                    />
+                  </svg>
+                  <span className="font-medium text-(--text-primary)">
+                    Inspect Source Code &amp; Test Artifacts
+                  </span>
+                  <span className="text-(--text-muted) group-hover:text-(--text-primary) transition-colors">
+                    ↗
+                  </span>
+                </a>
+              </div>
+            </div>
+
+            {/* Right Column: Architectural Scope Matrix (6 cols, 14px scaling, row-inspection hover) */}
+            <div className="lg:col-span-6">
+              <div className="border border-(--border) rounded-xl overflow-hidden bg-(--surface)">
+                <div className="px-6 py-4 border-b border-(--border) bg-(--bg) flex items-center justify-between">
+                  <span className="text-sm font-mono font-semibold text-(--text-primary) uppercase tracking-wider">
+                    Scope &amp; Implementation Matrix
+                  </span>
+                  <span className="text-xs font-mono text-(--text-muted) px-2.5 py-0.5 rounded border border-(--border)">
+                    SPEC-26125
+                  </span>
+                </div>
+
+                <div className="p-6 lg:p-7 font-mono text-sm divide-y divide-(--border)">
+                  {/* Operational items */}
+                  <div className="pb-5 space-y-3.5">
+                    <div className="text-xs tracking-wider uppercase text-(--text-muted) font-semibold flex items-center gap-2 mb-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-(--success) shrink-0" />
+                      OPERATIONAL IN CURRENT ENGINE
+                    </div>
+                    <div className="flex items-start gap-3 p-2 -mx-2 rounded-md transition-colors duration-150 hover:bg-(--surface-hover)">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-(--success)/15 text-(--success) text-xs font-bold shrink-0 mt-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-(--success) shrink-0" />
+                        LIVE
+                      </span>
+                      <span className="text-sm leading-relaxed text-(--text-primary)">
+                        Temporal permission verification (point-in-time state reasoning via AccessControl.sol)
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-3 p-2 -mx-2 rounded-md transition-colors duration-150 hover:bg-(--surface-hover)">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-(--success)/15 text-(--success) text-xs font-bold shrink-0 mt-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-(--success) shrink-0" />
+                        LIVE
+                      </span>
+                      <span className="text-sm leading-relaxed text-(--text-primary)">
+                        Dual-custody multi-officer authorization (two-man rule consensus for classified assets)
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-3 p-2 -mx-2 rounded-md transition-colors duration-150 hover:bg-(--surface-hover)">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-(--success)/15 text-(--success) text-xs font-bold shrink-0 mt-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-(--success) shrink-0" />
+                        LIVE
+                      </span>
+                      <span className="text-sm leading-relaxed text-(--text-primary)">
+                        Two-tier envelope encryption (off-chain AES-256-GCM vault with on-chain SHA-256 commitments)
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-3 p-2 -mx-2 rounded-md transition-colors duration-150 hover:bg-(--surface-hover)">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-(--success)/15 text-(--success) text-xs font-bold shrink-0 mt-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-(--success) shrink-0" />
+                        LIVE
+                      </span>
+                      <span className="text-sm leading-relaxed text-(--text-primary)">
+                        Independent online verification (re-verifies cryptographic proof bundles via external RPC with zero backend dependency)
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Planned items */}
+                  <div className="pt-5 space-y-3.5">
+                    <div className="text-xs tracking-wider uppercase text-(--text-muted) font-semibold flex items-center gap-2 mb-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-(--accent) shrink-0" />
+                      ARCHITECTURAL ROADMAP // LEVEL 3
+                    </div>
+                    <div className="flex items-start gap-3 p-2 -mx-2 rounded-md transition-colors duration-150 hover:bg-(--surface-hover)">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-(--accent)/15 text-(--accent) text-xs font-bold shrink-0 mt-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-(--accent) shrink-0" />
+                        PLANNED
+                      </span>
+                      <span className="text-sm leading-relaxed text-(--text-muted)">
+                        True offline verification (Level 3 local Merkle checkpoint and state inclusion proofs, zero network calls)
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-3 p-2 -mx-2 rounded-md transition-colors duration-150 hover:bg-(--surface-hover)">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-(--accent)/15 text-(--accent) text-xs font-bold shrink-0 mt-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-(--accent) shrink-0" />
+                        PLANNED
+                      </span>
+                      <span className="text-sm leading-relaxed text-(--text-muted)">
+                        Production consortium deployment and hardware security module (HSM) relaying
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="px-6 py-3.5 border-t border-(--border) bg-(--bg) flex items-center justify-between text-xs sm:text-sm font-mono text-(--text-muted)">
+                  <span>Verification Credibility:</span>
+                  <span className="text-(--success) font-medium">Smart Contract &amp; Backend Integration Test Suites Verified</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Understated Team Credits Row */}
+          <div className="mt-14 pt-6 border-t border-(--border) flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono text-(--text-faint)">
+            <div>
+              SMART INDIA HACKATHON 2026 · PROBLEM STATEMENT: 26125 · TEAM ID: 152562
+            </div>
+            <div className="flex items-center gap-2 text-(--text-muted)">
+              <span>Deterministic Consensus Engine</span>
+              <span>·</span>
+              <span>EVM Node 31337</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          SECTION 9: BESPOKE FOOTER (Optimus Footer Style)
       ========================================================================= */}
       <footer className="relative border-t border-(--border) overflow-hidden">
         {/* Wave Field Canvas Matrix Background */}
@@ -1178,7 +1429,7 @@ export default function Home() {
                 <span className="text-[10px] font-mono text-(--text-muted) px-1 py-0.5 rounded border border-(--border)">TM</span>
               </Link>
               <p className="text-xs text-(--text-muted) leading-relaxed mb-6 max-w-xs">
-                Zero-trust document authorization at block speed. Smart India Hackathon 2026 Problem Statement 26125.
+                Zero-trust access provenance & cryptographic verification. SIH-26125 // Team ID-152562.
               </p>
             </div>
 
@@ -1221,9 +1472,9 @@ export default function Home() {
           </div>
 
           <div className="mt-16 pt-8 border-t border-(--border) flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-mono text-(--text-muted)">
-            <p>© 2026 <span className="font-pramaan font-bold">PRAMAAN</span>™. Built for Smart India Hackathon (SIH 2026).</p>
+            <p>© 2026 <span className="font-pramaan font-bold">PRAMAAN</span>™. SIH-26125 // Team ID-152562.</p>
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-(--success) animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-(--success)" />
               <span>All Systems Operational · Hardhat Node 31337</span>
             </div>
           </div>

@@ -37,6 +37,7 @@
     - [Flow 4: Verified Asset Download & Proof Bundle Generation](#flow-4-verified-asset-download--proof-bundle-generation)
     - [Flow 5: Temporal Policy-at-the-Time Verification (Auditor Flow)](#flow-5-temporal-policy-at-the-time-verification-auditor-flow)
     - [Flow 6: Independent Third-Party Proof Verification (Level 2)](#flow-6-independent-third-party-proof-verification-level-2)
+    - [Flow 7: Dual-Custody Multi-Officer Authorization (Two-Man Rule)](#flow-7-dual-custody-multi-officer-authorization-two-man-rule)
   - [2.3 Cryptographic Key Hierarchy & Security Boundary](#23-cryptographic-key-hierarchy--security-boundary)
   - [2.4 Smart Contracts Reference Matrix](#24-smart-contracts-reference-matrix)
   - [2.5 Port Allocation & Runtime Network Summary](#25-port-allocation--runtime-network-summary)
@@ -60,9 +61,9 @@ Traditional Role-Based Access Control (RBAC) relies on **mutable centralized dat
 │ 1. ON-CHAIN TIMELINES    │ 2. DUAL-TIER ENVELOPE       │ 3. STANDALONE PROOF BUNDLES   │
 │ Permissions are stored   │ Payloads are encrypted with │ Downloads emit a cryptograph- │
 │ as append-only versioned │ unique per-asset AES keys.  │ ically signed JSON bundle.    │
-│ arrays. Valid ranges     │ Master keys wrap asset keys.│ Any external auditor can      │
-│ [validFrom, validUntil)  │ Zero unencrypted bytes      │ verify it offline against     │
-│ are mathematically fixed.│ ever touch the blockchain.  │ the blockchain Merkle state.  │
+│ arrays. Valid ranges     │ Master keys wrap asset keys.│ External auditors verify it   │
+│ [validFrom, validUntil)  │ Zero unencrypted bytes      │ independently via EVM RPC     │
+│ are mathematically fixed.│ ever touch the blockchain.  │ without trusting our backend. │
 └──────────────────────────┴─────────────────────────────┴───────────────────────────────┘
 ```
 
@@ -171,7 +172,7 @@ graph TB
             P_Permissions["/permissions (Dynamic RBAC Management)"]
             P_PolicyCheck["/policy-check (Temporal Auditor Portal)"]
             P_Download["/download (Decryption & Proof Export)"]
-            P_Verify["/verify (Independent Offline/Online Verifier)"]
+            P_Verify["/verify (Independent Online Verifier via RPC)"]
         end
 
         subgraph ClientContext["Client State & Adapters"]
@@ -722,6 +723,59 @@ sequenceDiagram
 
 ---
 
+#### Flow 7: Dual-Custody Multi-Officer Authorization (Two-Man Rule)
+For sensitive assets classified as `CONFIDENTIAL`, unilateral single-signature permissions are prevented on-chain. Two distinct active officers must approve the change before it takes effect on the immutable versioned timeline:
+
+<p align="center">
+  <img src="diagrams/dual_custody_flow.svg" width="100%" alt="Flow 7: Dual-Custody Multi-Officer Authorization" />
+</p>
+
+<details>
+<summary><b>🔍 Click to expand Dual-Custody Multi-Officer Consensus Sequence Protocol</b></summary>
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Off1 as Officer 1 (Maker / Admin)
+    actor Off2 as Officer 2 (Checker / Manager)
+    participant UI as Next.js Console (/permissions)
+    participant API as Express API (/api/permissions)
+    participant ACC as AccessControl.sol
+    participant AR as AssetRegistry.sol
+    participant IR as IdentityRegistry.sol
+
+    Off1->>UI: Submit Permission Change (Asset #1042, CONFIDENTIAL, Subject DID, READ)
+    UI->>ACC: Off1 MetaMask calls requestPermission(assetId=1042, subjectDID, READ, GRANTED)
+    ACC->>IR: Verify Off1 isActive && role in (ADMIN, MANAGER)
+    ACC->>ACC: Create PermissionRequest { requestId: 12, requester: Off1.address, expiresAt: now + 24h }
+    ACC-->>UI: Emits PermissionRequested(requestId=12, requester=Off1.address, expiresAt)
+    UI-->>Off1: Status: PENDING_DUAL_CUSTODY (24h countdown)
+    
+    Note over Off1,Off2: Operational Notification: Request #12 requires Officer 2 co-signature
+
+    Off2->>UI: View Pending Requests Portal (/permissions)
+    UI->>API: GET /api/permissions/requests
+    API->>ACC: Scan pending requests
+    ACC-->>API: Returns list of PENDING requests with TTLs
+    API-->>UI: Displays Request #12 (Requester: Off1.address, Expiration Countdown)
+
+    alt Self-Approval Attempt (Off2 == Off1)
+        UI->>UI: Button disabled: "Self-Approval Blocked"
+    else Legitimate Officer 2 Approval
+        Off2->>UI: Click "Co-Sign (Officer 2)"
+        UI->>ACC: Off2 MetaMask calls approvePermission(requestId=12) directly on-chain
+        ACC->>IR: Verify Off2 isActive && role in (ADMIN, MANAGER)
+        ACC->>ACC: Verify msg.sender != request.requester (Off2 != Off1)
+        ACC->>ACC: Verify block.timestamp <= expiresAt
+        ACC->>ACC: Mark approved = true, append permission to versioned timeline
+        ACC-->>UI: Emits PermissionApproved(requestId=12, approver=Off2.address)
+        UI-->>Off2: Dual-Custody Approval Confirmed · Active on Ledger
+    end
+```
+</details>
+
+---
+
 ### 2.3 Cryptographic Key Hierarchy & Security Boundary
 
 To eliminate cross-contamination of trust, PRAMAAN strictly enforces separation between 4 distinct keys:
@@ -793,15 +847,22 @@ All three contracts reside in [`contracts/contracts/`](../contracts/contracts) a
 | `IdentityRevoked` | Event | — | — | Emitted upon identity revocation |
 
 #### Contract 2: `AccessControl.sol`
-*The append-only dynamic RBAC engine with temporal query capabilities.*
+*The append-only dynamic RBAC engine with temporal query capabilities and dual-custody consensus.*
 
 | Method / Event | Type | Visibility | Access Constraint | Purpose |
 | :--- | :--- | :--- | :--- | :--- |
-| `setPermission(assetId, did, action, state)` | State Write | `external` | `onlyActiveAdminOrManager` | Closes previous version & appends new policy |
+| `setPermission(assetId, did, action, state)` | State Write | `external` | `onlyActiveAdminOrManager` | Closes previous version & appends new policy (direct single-sig) |
+| `requestPermission(assetId, did, action, state)` | State Write | `external` | `onlyActiveAdminOrManager` | Classification-aware: single-sig for PUBLIC/INTERNAL; routes CONFIDENTIAL to dual-custody |
+| `approvePermission(requestId)` | State Write | `external` | Active Admin/Manager (`msg.sender != requester`) | Approves dual-custody request within 24h TTL; appends to versioned timeline |
+| `cancelPermissionRequest(requestId)` | State Write | `external` | Requester or Active Admin | Cancels pending dual-custody request |
 | `checkPermissionNow(assetId, did, action)` | View | `external` | Public | Checks active policy AND subject's `isActive()` |
 | `checkPermissionAtTime(assetId, did, action, T)` | View | `external` | Public | **CORE USP**: Scans timeline for policy active at $T$ |
 | `recordAccess(assetId, did, permId)` | State Write | `external` | Valid Caller | Re-checks policy and emits `AssetAccessed` log |
+| `setAssetRegistry(assetRegistry)` | State Write | `external` | Deployer Only | One-shot initializer linking AssetRegistry for classification checks |
 | `PermissionChanged` | Event | — | — | Emitted upon every grant or revocation |
+| `PermissionRequested` | Event | — | — | Emitted when a dual-custody request is initiated |
+| `PermissionApproved` | Event | — | — | Emitted when Officer 2 approves dual-custody request |
+| `PermissionRequestCancelled` | Event | — | — | Emitted when a pending request is cancelled |
 | `AssetAccessed` | Event | — | — | Immutably anchors asset download receipt |
 
 #### Contract 3: `AssetRegistry.sol` (ERC-721)

@@ -286,7 +286,7 @@ export default function IdentitiesPage() {
                 <p className="text-xs text-(--text-muted)">
                   Display names are stored off-chain in Postgres to preserve privacy. Admins (or the active identity owner) can rename identities anytime.
                 </p>
-                {lookupResult.did.toLowerCase().includes("0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266") ? (
+                {lookupResult.did.toLowerCase().includes((process.env.NEXT_PUBLIC_BOOTSTRAP_ADMIN || "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266").toLowerCase()) ? (
                   <div className="flex items-center gap-2.5 p-3 rounded-md bg-(--surface) border border-(--border) text-xs font-mono text-(--text-muted)">
                     <span className="text-base">🔒</span>
                     <div>

@@ -167,13 +167,12 @@
     <text x="50" y="34" fill="#34d399" font-family="system-ui, sans-serif" font-size="11" font-weight="700">VERIFY</text>
     <line x1="12" y1="56" x2="124" y2="56" stroke="#334155" stroke-width="1"/>
 
-    <text x="12" y="80" fill="#ffffff" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Air-Gapped</text>
+    <text x="12" y="80" fill="#ffffff" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Independent</text>
     <text x="12" y="105" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">External depot</text>
     <text x="12" y="123" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">verifies proof</text>
-    <text x="12" y="141" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">bundle offline</text>
-    <text x="12" y="159" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">or via any RPC.</text>
-    <text x="12" y="181" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">No trust in</text>
-    <text x="12" y="199" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">central backend.</text>
+    <text x="12" y="141" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">via public RPC.</text>
+    <text x="12" y="159" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">Zero backend</text>
+    <text x="12" y="177" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">dependency.</text>
 
     <rect x="12" y="235" width="112" height="24" rx="4" fill="#064e3b"/>
     <text x="68" y="251" fill="#6ee7b7" font-family="system-ui, sans-serif" font-size="10" font-weight="600" text-anchor="middle">Level 2 Verifier</text>

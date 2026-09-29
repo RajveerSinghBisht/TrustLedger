@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 640" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGradDual" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d111d"/>
+      <stop offset="100%" stop-color="#070a12"/>
+    </linearGradient>
+    <linearGradient id="cardGradDual" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <marker id="arrowDualCyan" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#38bdf8"/>
+    </marker>
+    <marker id="arrowDualGreen" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#10b981"/>
+    </marker>
+  </defs>
+
+  <rect width="1100" height="640" fill="url(#bgGradDual)"/>
+
+  <!-- Title Banner -->
+  <rect x="40" y="20" width="1020" height="54" rx="8" fill="#111827" stroke="#1f2937" stroke-width="1"/>
+  <circle cx="68" cy="47" r="10" fill="#38bdf8" opacity="0.2"/>
+  <circle cx="68" cy="47" r="5" fill="#38bdf8"/>
+  <text x="90" y="52" fill="#f8fafc" font-family="system-ui, sans-serif" font-size="16" font-weight="700">Flow 7: Dual-Custody Multi-Officer Consensus (Two-Man Rule for Classified Assets)</text>
+  <rect x="860" y="34" width="180" height="26" rx="13" fill="#1e3a5f"/>
+  <text x="950" y="51" fill="#7aa2ba" font-family="system-ui, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Separation of Duty</text>
+
+  <!-- Left: Phase 1 — Maker (Officer 1) Initiation -->
+  <g transform="translate(40, 95)">
+    <rect width="320" height="515" rx="8" fill="url(#cardGradDual)" stroke="#38bdf8" stroke-width="1.5"/>
+    <rect x="16" y="16" width="70" height="20" rx="3" fill="#0284c7"/><text x="51" y="30" fill="#ffffff" font-family="system-ui, sans-serif" font-size="10" font-weight="700" text-anchor="middle">MAKER</text>
+    <text x="96" y="32" fill="#38bdf8" font-family="system-ui, sans-serif" font-size="14" font-weight="700">Officer 1 (Initiator)</text>
+    
+    <text x="16" y="66" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">1. Targets Classified Asset:</text>
+    <rect x="16" y="78" width="288" height="96" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <g font-family="monospace" font-size="11" fill="#cbd5e1">
+      <text x="26" y="102">Asset ID:     #1042</text>
+      <text x="26" y="122">Class:        <tspan fill="#f87171">CONFIDENTIAL (2)</tspan></text>
+      <text x="26" y="142">Target DID:   did:trustledger:0x8f..</text>
+      <text x="26" y="162">Requested:    READ -> GRANTED</text>
+    </g>
+
+    <text x="16" y="198" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">2. Classification Routing:</text>
+    <rect x="16" y="210" width="288" height="90" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <g font-family="system-ui, sans-serif" font-size="11" fill="#cbd5e1">
+      <text x="26" y="232">• Checks IAssetClassification</text>
+      <text x="26" y="252">• CONFIDENTIAL requires 2 signers</text>
+      <text x="26" y="272" fill="#fbbf24">• Single-sig grant REJECTED</text>
+      <text x="26" y="290" fill="#38bdf8">-> Dispatches requestPermission()</text>
+    </g>
+
+    <text x="16" y="324" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">3. Pending On-Chain Request:</text>
+    <rect x="16" y="336" width="288" height="155" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <g font-family="monospace" font-size="10" fill="#cbd5e1">
+      <text x="26" y="358" fill="#38bdf8">PermissionRequest {</text>
+      <text x="36" y="378">requestId:    12,</text>
+      <text x="36" y="398">requester:    0xf39f.. (Off1),</text>
+      <text x="36" y="418">createdAt:    T_0,</text>
+      <text x="36" y="438" fill="#f87171">expiresAt:    T_0 + 24 Hours,</text>
+      <text x="36" y="458">status:       PENDING</text>
+      <text x="26" y="478" fill="#38bdf8">}</text>
+    </g>
+  </g>
+
+  <!-- Arrow Maker -> Engine -->
+  <path d="M 360 350 L 390 350" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#arrowDualCyan)"/>
+
+  <!-- Middle: Phase 2 — On-Chain Verification Engine -->
+  <g transform="translate(390, 95)">
+    <rect width="320" height="515" rx="8" fill="url(#cardGradDual)" stroke="#f59e0b" stroke-width="1.5"/>
+    <rect x="16" y="16" width="90" height="20" rx="3" fill="#d97706"/><text x="61" y="30" fill="#ffffff" font-family="system-ui, sans-serif" font-size="10" font-weight="700" text-anchor="middle">SMART LOGIC</text>
+    <text x="116" y="32" fill="#fbbf24" font-family="system-ui, sans-serif" font-size="14" font-weight="700">AccessControl.sol Invariants</text>
+
+    <!-- Check 1: Key Separation -->
+    <rect x="16" y="66" width="288" height="120" rx="6" fill="#141a29" stroke="#1e3a5f" stroke-width="1"/>
+    <text x="26" y="90" fill="#fbbf24" font-family="system-ui, sans-serif" font-size="12" font-weight="700">Invariant 1: Non-Self-Approval</text>
+    <text x="26" y="112" fill="#cbd5e1" font-family="monospace" font-size="11">require(msg.sender != req.requester)</text>
+    <text x="26" y="132" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">Officer 1 (Maker) CANNOT approve</text>
+    <text x="26" y="150" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">their own request under any state.</text>
+    <text x="26" y="170" fill="#34d399" font-family="system-ui, sans-serif" font-size="10">✓ Cryptographic key separation</text>
+
+    <!-- Check 2: Deterministic TTL -->
+    <rect x="16" y="200" width="288" height="120" rx="6" fill="#141a29" stroke="#1e3a5f" stroke-width="1"/>
+    <text x="26" y="224" fill="#fbbf24" font-family="system-ui, sans-serif" font-size="12" font-weight="700">Invariant 2: Deterministic 24h TTL</text>
+    <text x="26" y="246" fill="#cbd5e1" font-family="monospace" font-size="11">require(block.timestamp &lt;= expiresAt)</text>
+    <text x="26" y="266" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">Requests expire strictly 24 hours</text>
+    <text x="26" y="284" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">after creation. No zombie requests.</text>
+    <text x="26" y="304" fill="#f87171" font-family="system-ui, sans-serif" font-size="10">✗ Expired requests revert automatically</text>
+
+    <!-- Check 3: Active Role -->
+    <rect x="16" y="334" width="288" height="155" rx="6" fill="#141a29" stroke="#1e3a5f" stroke-width="1"/>
+    <text x="26" y="358" fill="#fbbf24" font-family="system-ui, sans-serif" font-size="12" font-weight="700">Invariant 3: Identity &amp; Role Guard</text>
+    <text x="26" y="380" fill="#cbd5e1" font-family="monospace" font-size="11">IR.isActive(approver) &amp;&amp;</text>
+    <text x="26" y="398" fill="#cbd5e1" font-family="monospace" font-size="11">IR.getRole(approver) in [ADMIN, MGR]</text>
+    <text x="26" y="420" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">Checker must possess active role</text>
+    <text x="26" y="438" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">and current authorization.</text>
+    <text x="26" y="465" fill="#34d399" font-family="system-ui, sans-serif" font-size="11">Emits: PermissionApproved(#12)</text>
+  </g>
+
+  <!-- Arrow Engine -> Checker -->
+  <path d="M 710 350 L 740 350" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrowDualGreen)"/>
+
+  <!-- Right: Phase 3 — Checker (Officer 2) Approval -->
+  <g transform="translate(740, 95)">
+    <rect width="320" height="515" rx="8" fill="url(#cardGradDual)" stroke="#10b981" stroke-width="1.5"/>
+    <rect x="16" y="16" width="75" height="20" rx="3" fill="#059669"/><text x="53" y="30" fill="#ffffff" font-family="system-ui, sans-serif" font-size="10" font-weight="700" text-anchor="middle">CHECKER</text>
+    <text x="101" y="32" fill="#34d399" font-family="system-ui, sans-serif" font-size="14" font-weight="700">Officer 2 (Approver)</text>
+
+    <text x="16" y="66" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">1. Audits Pending Queue:</text>
+    <rect x="16" y="78" width="288" height="96" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <g font-family="system-ui, sans-serif" font-size="11" fill="#cbd5e1">
+      <text x="26" y="102">• GET /api/permissions/requests</text>
+      <text x="26" y="122">• Inspects Request #12 details</text>
+      <text x="26" y="142">• Reviews Maker identity (Off1)</text>
+      <text x="26" y="162" fill="#fde68a">• Real-time TTL countdown badge</text>
+    </g>
+
+    <text x="16" y="198" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">2. Signs Approval Transaction:</text>
+    <rect x="16" y="210" width="288" height="90" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <g font-family="system-ui, sans-serif" font-size="11" fill="#cbd5e1">
+      <text x="26" y="232">• POST /api/permissions/12/approve</text>
+      <text x="26" y="252">• Signed with Off2 EVM Keypair</text>
+      <text x="26" y="272" fill="#34d399">• approvePermission(12) confirmed</text>
+      <text x="26" y="290">• On-chain status -> APPROVED</text>
+    </g>
+
+    <text x="16" y="324" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12">3. Appended to Versioned Timeline:</text>
+    <rect x="16" y="336" width="288" height="155" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <g font-family="monospace" font-size="10" fill="#cbd5e1">
+      <text x="26" y="358" fill="#34d399">Versioned Permission Record:</text>
+      <text x="36" y="380">permissionId: 88,</text>
+      <text x="36" y="400">validFrom:    T_approval,</text>
+      <text x="36" y="420">validUntil:   0 (Current),</text>
+      <text x="36" y="440">state:        GRANTED,</text>
+      <text x="36" y="460">grantedBy:    did:trustledger:Off1</text>
+      <text x="26" y="480" fill="#38bdf8">✓ Provable at any future timestamp</text>
+    </g>
+  </g>
+</svg>

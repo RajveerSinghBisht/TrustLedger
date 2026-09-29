@@ -163,7 +163,7 @@ export default function PolicyCheckPage() {
             <Input
               value={subjectDID}
               onChange={(e) => setSubjectDID(e.target.value)}
-              placeholder="did:trustledger:0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+              placeholder="did:trustledger:0x0000000000000000000000000000000000000000"
             />
           </Field>
           <Field label="Action">

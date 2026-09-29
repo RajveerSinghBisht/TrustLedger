@@ -70,7 +70,7 @@ export function AsciiSphere({ className = "w-full h-full" }: AsciiSphereProps) {
         (!document.documentElement.getAttribute("data-theme") &&
           window.matchMedia("(prefers-color-scheme: dark)").matches);
 
-      const baseColor = isDark ? "250, 250, 249" : "20, 17, 15";
+      const baseColor = isDark ? "56, 189, 248" : "15, 23, 42";
 
       const points: Array<{ x: number; y: number; z: number; char: string }> = [];
 

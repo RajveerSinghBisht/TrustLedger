@@ -452,7 +452,7 @@ returning the file:
 ### 3. Permissions
 
 **POST /api/permissions**
-Sets a permission. Requires `Authorization: Bearer <JWT>` for an ADMIN or
+Sets a permission directly (single-sig). Requires `Authorization: Bearer <JWT>` for an ADMIN or
 MANAGER identity — enforced on-chain by `setPermission`'s own access rule,
 but reject unauthenticated calls early with 401. Calls
 `AccessControl.setPermission` on-chain.
@@ -472,6 +472,61 @@ Response (201):
 {
   "permissionId": 87,
   "validFrom": 1735660800,
+  "txHash": "<ON_CHAIN_TRANSACTION_HASH>"
+}
+```
+
+**POST /api/permissions/request (Dual-Custody Routing)**
+Initiates a permission change with classification-aware routing. Requires JWT for an active ADMIN or MANAGER.
+If the targeted asset is `CONFIDENTIAL`, it creates a `PermissionRequest` on-chain in `PENDING` state with a 24-hour TTL, requiring Officer 2 approval. If `PUBLIC` or `INTERNAL`, it executes single-signature granting immediately.
+
+Request:
+```json
+{
+  "assetId": 1042,
+  "subjectDID": "did:trustledger:<SUBJECT_ADDRESS>",
+  "action": "READ",
+  "state": "GRANTED"
+}
+```
+
+Response for CONFIDENTIAL Asset (202 Accepted):
+```json
+{
+  "status": "PENDING_DUAL_CUSTODY",
+  "requestId": 12,
+  "assetId": 1042,
+  "subjectDID": "did:trustledger:<SUBJECT_ADDRESS>",
+  "requester": "0x0000000000000000000000000000000000000001",
+  "expiresAt": 1735747200,
+  "txHash": "<ON_CHAIN_TRANSACTION_HASH>"
+}
+```
+
+**GET /api/permissions/requests**
+Lists all on-chain dual-custody requests. Requires authenticated JWT. Returns an array of request objects including `requestId`, `assetId`, `subjectDID`, `action`, `requester`, `approver`, `createdAt`, `expiresAt`, and computed/contract status (`PENDING`, `APPROVED`, `CANCELLED`, `EXPIRED`).
+
+**GET /api/permissions/requests/:requestId**
+Retrieves details of a specific dual-custody request by ID.
+
+**POST /api/permissions/requests/:requestId/approve**
+Dual-custody approvals must be signed and broadcast directly to the smart contract (`AccessControl.approvePermission(requestId)`) by Officer 2's connected wallet.
+The backend server holds **no** approver keys.
+If called via the API:
+- Rejects with `400 DUAL_CUSTODY_SELF_APPROVAL_VIOLATION` if the authenticated caller is the original requester.
+- Rejects with `400 DIRECT_WALLET_SIGNING_REQUIRED` because server-side co-signing is disabled to prevent single-operator compromise.
+
+> **Security Note**: A self-approval bypass at the API layer was found during internal review and fixed; permanent regression test retained. Dual-custody mitigates single-operator abuse; assumes distinct humans hold distinct keys, governed by off-chain identity vetting.
+
+**POST /api/permissions/requests/:requestId/cancel**
+Cancels a pending dual-custody request. Caller must be the original requester (Officer 1) or an active ADMIN. Calls `AccessControl.cancelPermissionRequest(requestId)`.
+
+Response (200 OK):
+```json
+{
+  "status": "CANCELLED",
+  "requestId": 12,
+  "cancelledBy": "0x0000000000000000000000000000000000000001",
   "txHash": "<ON_CHAIN_TRANSACTION_HASH>"
 }
 ```

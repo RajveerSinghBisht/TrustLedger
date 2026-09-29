@@ -5,7 +5,7 @@ import { AuthProvider } from "@/lib/AuthContext";
 import { NavBar } from "@/components/NavBar";
 import { NetworkBanner } from "@/components/NetworkBanner";
 import { SessionResetBanner } from "@/components/SessionResetBanner";
-import { Instrument_Serif, Instrument_Sans, JetBrains_Mono, Orbitron } from "next/font/google";
+import { IBM_Plex_Sans, IBM_Plex_Mono, Orbitron } from "next/font/google";
 
 const orbitron = Orbitron({
   subsets: ["latin"],
@@ -13,29 +13,24 @@ const orbitron = Orbitron({
   display: "swap",
 });
 
-const instrumentSerif = Instrument_Serif({
-  weight: "400",
+const ibmPlexSans = IBM_Plex_Sans({
   subsets: ["latin"],
-  variable: "--font-instrument-serif",
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-ibm-plex-sans",
   display: "swap",
 });
 
-const instrumentSans = Instrument_Sans({
+const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
-  variable: "--font-instrument",
-  display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-jetbrains",
+  weight: ["400", "500", "600"],
+  variable: "--font-ibm-plex-mono",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "PRAMAAN™ — Enterprise Blockchain Access Control & Cryptographic Audits",
+  title: "PRAMAAN™ — Zero-Trust Blockchain Access Control & Cryptographic Audits",
   description:
-    "The zero-trust document security infrastructure for teams who ship. On-chain access policies, verifiable proof bundles, and cryptographic temporal audits.",
+    "Zero-trust document security infrastructure. On-chain access policies, verifiable proof bundles, and cryptographic temporal audits. SIH 2026 // PS 26125 // Team ID: 152562.",
   icons: {
     icon: "/pramaan-icon.png",
     shortcut: "/pramaan-icon.png",
@@ -51,7 +46,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${instrumentSerif.variable} ${instrumentSans.variable} ${jetbrainsMono.variable} ${orbitron.variable} h-full antialiased`}
+      className={`${ibmPlexSans.variable} ${ibmPlexMono.variable} ${orbitron.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

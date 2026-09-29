@@ -5,6 +5,14 @@ import {
   checkPermissionAtTime,
   setPermission,
   recordAccess,
+  requestPermission,
+  requestPermissionAndDecode,
+  approvePermission,
+  approvePermissionAndDecode,
+  cancelPermissionRequest,
+  cancelPermissionRequestAndDecode,
+  getPermissionRequest,
+  getPermissionRequests,
   _resetAccessControlServiceForTests,
 } from "../accessControlService";
 
@@ -27,5 +35,37 @@ describe("accessControlService", () => {
 
   test("exports recordAccess", () => {
     expect(typeof recordAccess).toBe("function");
+  });
+
+  test("exports requestPermission", () => {
+    expect(typeof requestPermission).toBe("function");
+  });
+
+  test("exports requestPermissionAndDecode", () => {
+    expect(typeof requestPermissionAndDecode).toBe("function");
+  });
+
+  test("exports approvePermission", () => {
+    expect(typeof approvePermission).toBe("function");
+  });
+
+  test("exports approvePermissionAndDecode", () => {
+    expect(typeof approvePermissionAndDecode).toBe("function");
+  });
+
+  test("exports cancelPermissionRequest", () => {
+    expect(typeof cancelPermissionRequest).toBe("function");
+  });
+
+  test("exports cancelPermissionRequestAndDecode", () => {
+    expect(typeof cancelPermissionRequestAndDecode).toBe("function");
+  });
+
+  test("exports getPermissionRequest", () => {
+    expect(typeof getPermissionRequest).toBe("function");
+  });
+
+  test("exports getPermissionRequests", () => {
+    expect(typeof getPermissionRequests).toBe("function");
   });
 });

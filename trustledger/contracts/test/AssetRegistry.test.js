@@ -325,6 +325,15 @@ describe("AssetRegistry", function () {
         assetRegistry.connect(deployer).transferAsset(999, user2.address)
       ).to.be.revertedWith("AssetRegistry: asset does not exist");
     });
+
+    it("CRITICAL: direct ERC-721 transferFrom reverts to prevent bypassing transferAsset", async function () {
+      const { assetRegistry, deployer, user1, user2 } = await deployFixture();
+      const assetId = await registerSampleAsset(assetRegistry, deployer);
+
+      await expect(
+        assetRegistry.connect(user1).transferFrom(user1.address, user2.address, assetId)
+      ).to.be.revertedWith("AssetRegistry: use transferAsset() for asset transfers");
+    });
   });
 
   describe("updateAssetVersion", function () {
